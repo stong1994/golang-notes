@@ -6,7 +6,6 @@ import (
 	"testing"
 )
 
-// todo 完善a-z
 func TestUnboundedChannel(t *testing.T) {
 	in, out := MakeInfinite()
 	lastVal := -1
