@@ -1,5 +1,5 @@
 * 代码位于src/time/time.go
-(...)
+```
 func (d Duration) String() string {
 	// Largest time is 2540400h10m10.000000000s
 	var buf [32]byte
@@ -72,7 +72,7 @@ func (d Duration) String() string {
 
 	return string(buf[w:])
 }
-(...)
+```
 
 > 代码逻辑很简单，就是将时间戳转换为字符串的标准格式，如果让我来写的话，就是判断然后拼接字符串（比较菜，见谅）
 
