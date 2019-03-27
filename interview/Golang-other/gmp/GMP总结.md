@@ -1,118 +1,119 @@
-*ÕâÆªÖ»ÊÇ¶ÔÆäËüÎÄÕÂµÄ¸öÈË×Ü½á£¨Õª³­£©£¬Ç¿ÁÒÍÆ¼öÔÄ¶ÁÔ­ÎÄ£¬Ô­ÎÄÁ´½ÓÔÚÏÂ±ß¡£*
+*è¿™ç¯‡åªæ˜¯å¯¹å…¶å®ƒæ–‡ç« çš„ä¸ªäººæ€»ç»“ï¼ˆæ‘˜æŠ„ï¼‰ï¼Œå¼ºçƒˆæŽ¨èé˜…è¯»åŽŸæ–‡ï¼ŒåŽŸæ–‡é“¾æŽ¥åœ¨ä¸‹è¾¹ã€‚*
 
-### Ò»¡¢Goroutine Schedule
-Ò»¸öGO³ÌÐò¶Ô²Ù×÷ÏµÍ³À´½²Ö»ÊÇÒ»¸ö**ÓÃ»§²ã³ÌÐò**£¬ÔÚËüµÄÑÛÖÐÖ»ÓÐthread¡£²Ù×÷ÏµÍ³²»»áÖªµÀgoroutineÊÇÊ²Ã´£¬¶øgoroutine µÄµ÷¶ÈÈ«¿¿go×Ô¼ºÍê³É¡£
+### ä¸€ã€Goroutine Schedule
+ä¸€ä¸ªGOç¨‹åºå¯¹æ“ä½œç³»ç»Ÿæ¥è®²åªæ˜¯ä¸€ä¸ª**ç”¨æˆ·å±‚ç¨‹åº**ï¼Œåœ¨å®ƒçš„çœ¼ä¸­åªæœ‰threadã€‚æ“ä½œç³»ç»Ÿä¸ä¼šçŸ¥é“goroutineæ˜¯ä»€ä¹ˆï¼Œè€Œgoroutine çš„è°ƒåº¦å…¨é goè‡ªå·±å®Œæˆã€‚
 
-ÔÚ²Ù×÷ÏµÍ³²ãÃæ£¬Thread¾ºÕùµÄÊÇÕæÊµµÄÎïÀíCPU×ÊÔ´£¬µ«ÔÚGo²ãÃæ£¬goroutine¾ºÕùµÄ×ÊÔ´ÊÇ²Ù×÷ÏµÍ³Ïß³Ì¡£ÓÚÊÇ£¬½«goroutine°´ÕÕÒ»¶¨Ëã·¨·Åµ½Ïß³ÌÉÏÖ´ÐÐ¾ÍÊÇgo scheduleµÄÈÎÎñ¡£ÕâÖÖÓïÑÔ²ãÃæ×Ô´øµ÷¶ÈÆ÷µÄ£¬³ÆÖ®Îª**Ô­ÉúÖ§³Ö²¢·¢**
+åœ¨æ“ä½œç³»ç»Ÿå±‚é¢ï¼ŒThreadç«žäº‰çš„æ˜¯çœŸå®žçš„ç‰©ç†CPUèµ„æºï¼Œä½†åœ¨Goå±‚é¢ï¼Œgoroutineç«žäº‰çš„èµ„æºæ˜¯æ“ä½œç³»ç»Ÿçº¿ç¨‹ã€‚äºŽæ˜¯ï¼Œå°†goroutineæŒ‰ç…§ä¸€å®šç®—æ³•æ”¾åˆ°çº¿ç¨‹ä¸Šæ‰§è¡Œå°±æ˜¯go scheduleçš„ä»»åŠ¡ã€‚è¿™ç§è¯­è¨€å±‚é¢è‡ªå¸¦è°ƒåº¦å™¨çš„ï¼Œç§°ä¹‹ä¸º**åŽŸç”Ÿæ”¯æŒå¹¶å‘**
 
-### ¶þ¡¢ÑÝ»¯¹ý³Ì
-#### 1.G-MÄ£ÐÍ
-2012Äê3ÔÂ28ÈÕ£¬Go1.0ÕýÊ½·¢²¼¡£ÔÚÕâ¸ö°æ±¾µÄµ÷¶ÈÆ÷ÖÐ£¬groutine¶ÔÓ¦ÓÚruntimeÖÐµÄÒ»¸ö³éÏó½á¹¹£ºG£¬¶øos thread×÷Îª¡±ÎïÀíCPU¡°µÄ´æÔÚ¶ø±»³éÏóÎªÒ»¸ö½á¹¹£ºM¡£
+### äºŒã€æ¼”åŒ–è¿‡ç¨‹
+#### 1.G-Mæ¨¡åž‹
+2012å¹´3æœˆ28æ—¥ï¼ŒGo1.0æ­£å¼å‘å¸ƒã€‚åœ¨è¿™ä¸ªç‰ˆæœ¬çš„è°ƒåº¦å™¨ä¸­ï¼Œgroutineå¯¹åº”äºŽruntimeä¸­çš„ä¸€ä¸ªæŠ½è±¡ç»“æž„ï¼šGï¼Œè€Œos threadä½œä¸ºâ€ç‰©ç†CPUâ€œçš„å­˜åœ¨è€Œè¢«æŠ½è±¡ä¸ºä¸€ä¸ªç»“æž„ï¼šMã€‚
 
-Ç°Intel blackbelt¹¤³ÌÊ¦¡¢ÏÖGoogle¹¤³ÌÊ¦Dmitry VyukovÔÚÆä¡¶Scalable Go Scheduler Design¡·Ò»ÎÄÖÐÖ¸³öÁËG-MÄ£ÐÍµÄÒ»¸öÖØÒª²»×ã£º ÏÞÖÆÁËGo²¢·¢³ÌÐòµÄ**ÉìËõÐÔ**£¬ÓÈÆäÊÇ¶ÔÄÇÐ©ÓÐ¸ßÍÌÍÂ»ò²¢ÐÐ¼ÆËãÐèÇóµÄ·þÎñ³ÌÐò¡£Ö÷ÒªÌåÏÖÔÚÈçÏÂ¼¸¸ö·½Ãæ£º
-> - µ¥Ò»È«¾Ö»¥³âËø(Sched.Lock)ºÍ¼¯ÖÐ×´Ì¬´æ´¢µÄ´æÔÚµ¼ÖÂËùÓÐgoroutineÏà¹Ø²Ù×÷£¬±ÈÈç£º´´½¨¡¢ÖØÐÂµ÷¶ÈµÈ¶¼ÒªÉÏËø£»
-> - goroutine´«µÝÎÊÌâ£ºM¾­³£ÔÚMÖ®¼ä´«µÝ¡±¿ÉÔËÐÐ¡±µÄgoroutine£¬Õâµ¼ÖÂµ÷¶ÈÑÓ³ÙÔö´óÒÔ¼°¶îÍâµÄÐÔÄÜËðºÄ£»
-> - Ã¿¸öM×öÄÚ´æ»º´æ£¬µ¼ÖÂÄÚ´æÕ¼ÓÃ¹ý¸ß£¬Êý¾Ý¾Ö²¿ÐÔ½Ï²î£»
-> - ÓÉÓÚsyscallµ÷ÓÃ¶øÐÎ³ÉµÄ¾çÁÒµÄworker thread×èÈûºÍ½â³ý×èÈû£¬µ¼ÖÂ¶îÍâµÄÐÔÄÜËðºÄ¡£
+å‰Intel blackbeltå·¥ç¨‹å¸ˆã€çŽ°Googleå·¥ç¨‹å¸ˆDmitry Vyukovåœ¨å…¶ã€ŠScalable Go Scheduler Designã€‹ä¸€æ–‡ä¸­æŒ‡å‡ºäº†G-Mæ¨¡åž‹çš„ä¸€ä¸ªé‡è¦ä¸è¶³ï¼š é™åˆ¶äº†Goå¹¶å‘ç¨‹åºçš„**ä¼¸ç¼©æ€§**ï¼Œå°¤å…¶æ˜¯å¯¹é‚£äº›æœ‰é«˜åžåæˆ–å¹¶è¡Œè®¡ç®—éœ€æ±‚çš„æœåŠ¡ç¨‹åºã€‚ä¸»è¦ä½“çŽ°åœ¨å¦‚ä¸‹å‡ ä¸ªæ–¹é¢ï¼š
+> - å•ä¸€å…¨å±€äº’æ–¥é”(Sched.Lock)å’Œé›†ä¸­çŠ¶æ€å­˜å‚¨çš„å­˜åœ¨å¯¼è‡´æ‰€æœ‰goroutineç›¸å…³æ“ä½œï¼Œæ¯”å¦‚ï¼šåˆ›å»ºã€é‡æ–°è°ƒåº¦ç­‰éƒ½è¦ä¸Šé”ï¼›
+> - goroutineä¼ é€’é—®é¢˜ï¼šMç»å¸¸åœ¨Mä¹‹é—´ä¼ é€’â€å¯è¿è¡Œâ€çš„goroutineï¼Œè¿™å¯¼è‡´è°ƒåº¦å»¶è¿Ÿå¢žå¤§ä»¥åŠé¢å¤–çš„æ€§èƒ½æŸè€—ï¼›
+> - æ¯ä¸ªMåšå†…å­˜ç¼“å­˜ï¼Œå¯¼è‡´å†…å­˜å ç”¨è¿‡é«˜ï¼Œæ•°æ®å±€éƒ¨æ€§è¾ƒå·®ï¼›
+> - ç”±äºŽsyscallè°ƒç”¨è€Œå½¢æˆçš„å‰§çƒˆçš„worker threadé˜»å¡žå’Œè§£é™¤é˜»å¡žï¼Œå¯¼è‡´é¢å¤–çš„æ€§èƒ½æŸè€—ã€‚
 
-#### 2.G-M-PÄ£ÐÍ
-Dmitry VyukovÇ××Ô²Ùµ¶¸Ä½øGo scheduler£¬ÔÚGo 1.1ÖÐÊµÏÖÁËG-P-Mµ÷¶ÈÄ£ÐÍºÍwork stealingËã·¨£¬Õâ¸öÄ£ÐÍÒ»Ö±ÑØÓÃÖÁ½ñ£º
+#### 2.G-M-Pæ¨¡åž‹
+Dmitry Vyukoväº²è‡ªæ“åˆ€æ”¹è¿›Go schedulerï¼Œåœ¨Go 1.1ä¸­å®žçŽ°äº†G-P-Mè°ƒåº¦æ¨¡åž‹å’Œwork stealingç®—æ³•ï¼Œè¿™ä¸ªæ¨¡åž‹ä¸€ç›´æ²¿ç”¨è‡³ä»Šï¼š
 ![image](http://tonybai.com/wp-content/uploads/goroutine-scheduler-model.png)
 
-## ºËÐÄ¸ÅÄî
+## æ ¸å¿ƒæ¦‚å¿µ
 ### G (goroutine)
-- goroutine¿ÉÒÔ½âÊÍÎªÊÜ¹ÜÀíµÄÇáÁ¿Ïß³Ì
-- main±¾Éí¾ÍÊÇÒ»¸ögoroutine
-- goroutineÖ´ÐÐÒì²½²Ù×÷Ê±»á½øÈëÐÝÃß×´Ì¬, ´ý²Ù×÷Íê³ÉºóÔÙ»Ö¸´, ÎÞÐèÕ¼ÓÃÏµÍ³Ïß³Ì,
-- goroutineÐÂ½¨»ò»Ö¸´Ê±»áÌí¼Óµ½ÔËÐÐ¶ÓÁÐ, µÈ´ýMÈ¡³ö²¢ÔËÐÐ.
+- goroutineå¯ä»¥è§£é‡Šä¸ºå—ç®¡ç†çš„è½»é‡çº¿ç¨‹
+- mainæœ¬èº«å°±æ˜¯ä¸€ä¸ªgoroutine
+- goroutineæ‰§è¡Œå¼‚æ­¥æ“ä½œæ—¶ä¼šè¿›å…¥ä¼‘çœ çŠ¶æ€, å¾…æ“ä½œå®ŒæˆåŽå†æ¢å¤, æ— éœ€å ç”¨ç³»ç»Ÿçº¿ç¨‹,
+- goroutineæ–°å»ºæˆ–æ¢å¤æ—¶ä¼šæ·»åŠ åˆ°è¿è¡Œé˜Ÿåˆ—, ç­‰å¾…Må–å‡ºå¹¶è¿è¡Œ.
 
 ### M (machine)
-- machineµÈÍ¬ÓÚÏµÍ³Ïß³Ì
-- MÔËÐÐÁ½ÖÖ´úÂë
-> - go´úÂë, ¼´goroutine, MÔËÐÐgo´úÂëÐèÒªÒ»¸öP
-> - Ô­Éú´úÂë, ÀýÈç×èÈûµÄsyscall, MÔËÐÐÔ­Éú´úÂë²»ÐèÒªP
-- M»á´ÓÔËÐÐ¶ÓÁÐÖÐÈ¡³öG, È»ºóÔËÐÐG, Èç¹ûGÔËÐÐÍê±Ï»òÕß½øÈëÐÝÃß×´Ì¬, Ôò´ÓÔËÐÐ¶ÓÁÐÖÐÈ¡³öÏÂÒ»¸öGÔËÐÐ, ÖÜ¶ø¸´Ê¼
-- ÓÐÊ±ºòGÐèÒªµ÷ÓÃÒ»Ð©ÎÞ·¨±ÜÃâ×èÈûµÄÔ­Éú´úÂë, ÕâÊ±M»áÊÍ·Å³ÖÓÐµÄP²¢½øÈë×èÈû×´Ì¬, ÆäËûM»áÈ¡µÃÕâ¸öP²¢¼ÌÐøÔËÐÐ¶ÓÁÐÖÐµÄG.
-- goÐèÒª±£Ö¤ÓÐ×ã¹»µÄM¿ÉÒÔÔËÐÐG, ²»ÈÃCPUÏÐ×Å, Ò²ÐèÒª±£Ö¤MµÄÊýÁ¿²»ÄÜ¹ý¶à.
+- machineç­‰åŒäºŽç³»ç»Ÿçº¿ç¨‹
+- Mè¿è¡Œä¸¤ç§ä»£ç 
+> - goä»£ç , å³goroutine, Mè¿è¡Œgoä»£ç éœ€è¦ä¸€ä¸ªP
+> - åŽŸç”Ÿä»£ç , ä¾‹å¦‚é˜»å¡žçš„syscall, Mè¿è¡ŒåŽŸç”Ÿä»£ç ä¸éœ€è¦P
+- Mä¼šä»Žè¿è¡Œé˜Ÿåˆ—ä¸­å–å‡ºG, ç„¶åŽè¿è¡ŒG, å¦‚æžœGè¿è¡Œå®Œæ¯•æˆ–è€…è¿›å…¥ä¼‘çœ çŠ¶æ€, åˆ™ä»Žè¿è¡Œé˜Ÿåˆ—ä¸­å–å‡ºä¸‹ä¸€ä¸ªGè¿è¡Œ, å‘¨è€Œå¤å§‹
+- æœ‰æ—¶å€™Géœ€è¦è°ƒç”¨ä¸€äº›æ— æ³•é¿å…é˜»å¡žçš„åŽŸç”Ÿä»£ç , è¿™æ—¶Mä¼šé‡Šæ”¾æŒæœ‰çš„På¹¶è¿›å…¥é˜»å¡žçŠ¶æ€, å…¶ä»–Mä¼šå–å¾—è¿™ä¸ªPå¹¶ç»§ç»­è¿è¡Œé˜Ÿåˆ—ä¸­çš„G.
+- goéœ€è¦ä¿è¯æœ‰è¶³å¤Ÿçš„Må¯ä»¥è¿è¡ŒG, ä¸è®©CPUé—²ç€, ä¹Ÿéœ€è¦ä¿è¯Mçš„æ•°é‡ä¸èƒ½è¿‡å¤š.
 
 ### P (process)
-- PÊÇprocessµÄÍ·ÎÄ×Ö, ´ú±íMÔËÐÐGËùÐèÒªµÄ×ÊÔ´.
-- PµÄÊýÁ¿Ä¬ÈÏµÈÓÚcpuµÄÊýÁ¿£¬µ«¿ÉÒÔÍ¨¹ý»·¾³±äÁ¿`GOMAXPROC`ÐÞ¸Ä
-- PÒ²¿ÉÒÔÀí½âÎª¿ØÖÆgo´úÂëµÄ²¢ÐÐ¶ÈµÄ»úÖÆ
-- Ö´ÐÐÔ­Éú´úÂëµÄÏß³ÌÊýÁ¿²»ÊÜP¿ØÖÆ
-- ÒòÎªÍ¬Ò»Ê±¼äÖ»ÓÐÒ»¸öÏß³Ì(M)¿ÉÒÔÓµÓÐP, PÖÐµÄÊý¾Ý¶¼ÊÇËø×ÔÓÉ(lock free)µÄ, ¶ÁÐ´ÕâÐ©Êý¾ÝµÄÐ§ÂÊ»á·Ç³£µÄ¸ß.
+- Pæ˜¯processçš„å¤´æ–‡å­—, ä»£è¡¨Mè¿è¡ŒGæ‰€éœ€è¦çš„èµ„æº.
+- Pçš„æ•°é‡é»˜è®¤ç­‰äºŽcpuçš„æ•°é‡ï¼Œä½†å¯ä»¥é€šè¿‡çŽ¯å¢ƒå˜é‡`GOMAXPROC`ä¿®æ”¹
+- Pä¹Ÿå¯ä»¥ç†è§£ä¸ºæŽ§åˆ¶goä»£ç çš„å¹¶è¡Œåº¦çš„æœºåˆ¶
+- æ‰§è¡ŒåŽŸç”Ÿä»£ç çš„çº¿ç¨‹æ•°é‡ä¸å—PæŽ§åˆ¶
+- å› ä¸ºåŒä¸€æ—¶é—´åªæœ‰ä¸€ä¸ªçº¿ç¨‹(M)å¯ä»¥æ‹¥æœ‰P, Pä¸­çš„æ•°æ®éƒ½æ˜¯é”è‡ªç”±(lock free)çš„, è¯»å†™è¿™äº›æ•°æ®çš„æ•ˆçŽ‡ä¼šéžå¸¸çš„é«˜.
 
-## Êý¾Ý½á¹¹ 
-### GµÄ×´Ì¬
-- ¿ÕÏÐÖÐ(_Gidle): ±íÊ¾G¸Õ¸ÕÐÂ½¨, ÈÔÎ´³õÊ¼»¯
-- ´ýÔËÐÐ(_Grunnable): ±íÊ¾GÔÚÔËÐÐ¶ÓÁÐÖÐ, µÈ´ýMÈ¡³ö²¢ÔËÐÐ
-- ÔËÐÐÖÐ(_Grunning): ±íÊ¾MÕýÔÚÔËÐÐÕâ¸öG, ÕâÊ±ºòM»áÓµÓÐÒ»¸öP
-- ÏµÍ³µ÷ÓÃÖÐ(_Gsyscall): ±íÊ¾MÕýÔÚÔËÐÐÕâ¸öG·¢ÆðµÄÏµÍ³µ÷ÓÃ, ÕâÊ±ºòM²¢²»ÓµÓÐP
-- µÈ´ýÖÐ(_Gwaiting): ±íÊ¾GÔÚµÈ´ýÄ³Ð©Ìõ¼þÍê³É, ÕâÊ±ºòG²»ÔÚÔËÐÐÒ²²»ÔÚÔËÐÐ¶ÓÁÐÖÐ(¿ÉÄÜÔÚchannelµÄµÈ´ý¶ÓÁÐÖÐ)
-- ÒÑÖÐÖ¹(_Gdead): ±íÊ¾GÎ´±»Ê¹ÓÃ, ¿ÉÄÜÒÑÖ´ÐÐÍê±Ï(²¢ÔÚfreelistÖÐµÈ´ýÏÂ´Î¸´ÓÃ)
-- Õ»¸´ÖÆÖÐ(_Gcopystack): ±íÊ¾GÕýÔÚ»ñÈ¡Ò»¸öÐÂµÄÕ»¿Õ¼ä²¢°ÑÔ­À´µÄÄÚÈÝ¸´ÖÆ¹ýÈ¥(ÓÃÓÚ·ÀÖ¹GCÉ¨Ãè)
+## æ•°æ®ç»“æž„ 
+### Gçš„çŠ¶æ€
+- ç©ºé—²ä¸­(_Gidle): è¡¨ç¤ºGåˆšåˆšæ–°å»º, ä»æœªåˆå§‹åŒ–
+- å¾…è¿è¡Œ(_Grunnable): è¡¨ç¤ºGåœ¨è¿è¡Œé˜Ÿåˆ—ä¸­, ç­‰å¾…Må–å‡ºå¹¶è¿è¡Œ
+- è¿è¡Œä¸­(_Grunning): è¡¨ç¤ºMæ­£åœ¨è¿è¡Œè¿™ä¸ªG, è¿™æ—¶å€™Mä¼šæ‹¥æœ‰ä¸€ä¸ªP
+- ç³»ç»Ÿè°ƒç”¨ä¸­(_Gsyscall): è¡¨ç¤ºMæ­£åœ¨è¿è¡Œè¿™ä¸ªGå‘èµ·çš„ç³»ç»Ÿè°ƒç”¨, è¿™æ—¶å€™Må¹¶ä¸æ‹¥æœ‰P
+- ç­‰å¾…ä¸­(_Gwaiting): è¡¨ç¤ºGåœ¨ç­‰å¾…æŸäº›æ¡ä»¶å®Œæˆ, è¿™æ—¶å€™Gä¸åœ¨è¿è¡Œä¹Ÿä¸åœ¨è¿è¡Œé˜Ÿåˆ—ä¸­(å¯èƒ½åœ¨channelçš„ç­‰å¾…é˜Ÿåˆ—ä¸­)
+- å·²ä¸­æ­¢(_Gdead): è¡¨ç¤ºGæœªè¢«ä½¿ç”¨, å¯èƒ½å·²æ‰§è¡Œå®Œæ¯•(å¹¶åœ¨freelistä¸­ç­‰å¾…ä¸‹æ¬¡å¤ç”¨)
+- æ ˆå¤åˆ¶ä¸­(_Gcopystack): è¡¨ç¤ºGæ­£åœ¨èŽ·å–ä¸€ä¸ªæ–°çš„æ ˆç©ºé—´å¹¶æŠŠåŽŸæ¥çš„å†…å®¹å¤åˆ¶è¿‡åŽ»(ç”¨äºŽé˜²æ­¢GCæ‰«æ)
 
-### MµÄ×´Ì¬
-- ×ÔÐýÖÐ(spinning): MÕýÔÚ´ÓÔËÐÐ¶ÓÁÐ»ñÈ¡G, ÕâÊ±ºòM»áÓµÓÐÒ»¸öP
-- Ö´ÐÐgo´úÂëÖÐ: MÕýÔÚÖ´ÐÐgo´úÂë, ÕâÊ±ºòM»áÓµÓÐÒ»¸öP
-- Ö´ÐÐÔ­Éú´úÂëÖÐ: MÕýÔÚÖ´ÐÐÔ­Éú´úÂë»òÕß×èÈûµÄsyscall, ÕâÊ±M²¢²»ÓµÓÐP
-- ÐÝÃßÖÐ: M·¢ÏÖÎÞ´ýÔËÐÐµÄGÊ±»á½øÈëÐÝÃß, ²¢Ìí¼Óµ½¿ÕÏÐMÁ´±íÖÐ, ÕâÊ±M²¢²»ÓµÓÐP
+### Mçš„çŠ¶æ€
+- è‡ªæ—‹ä¸­(spinning): Mæ­£åœ¨ä»Žè¿è¡Œé˜Ÿåˆ—èŽ·å–G, è¿™æ—¶å€™Mä¼šæ‹¥æœ‰ä¸€ä¸ªP
+- æ‰§è¡Œgoä»£ç ä¸­: Mæ­£åœ¨æ‰§è¡Œgoä»£ç , è¿™æ—¶å€™Mä¼šæ‹¥æœ‰ä¸€ä¸ªP
+- æ‰§è¡ŒåŽŸç”Ÿä»£ç ä¸­: Mæ­£åœ¨æ‰§è¡ŒåŽŸç”Ÿä»£ç æˆ–è€…é˜»å¡žçš„syscall, è¿™æ—¶Må¹¶ä¸æ‹¥æœ‰P
+- ä¼‘çœ ä¸­: Må‘çŽ°æ— å¾…è¿è¡Œçš„Gæ—¶ä¼šè¿›å…¥ä¼‘çœ , å¹¶æ·»åŠ åˆ°ç©ºé—²Mé“¾è¡¨ä¸­, è¿™æ—¶Må¹¶ä¸æ‹¥æœ‰P
 
-### PµÄ×´Ì¬
-- ¿ÕÏÐÖÐ(_Pidle): µ±M·¢ÏÖÎÞ´ýÔËÐÐµÄGÊ±»á½øÈëÐÝÃß, - ÕâÊ±MÓµÓÐµÄP»á±äÎª¿ÕÏÐ²¢¼Óµ½¿ÕÏÐPÁ´±íÖÐ
-- ÔËÐÐÖÐ(_Prunning): µ±MÓµÓÐÁËÒ»¸öPºó, Õâ¸öPµÄ×´Ì¬¾Í»á±äÎªÔËÐÐÖÐ, MÔËÐÐG»áÊ¹ÓÃÕâ¸öPÖÐµÄ×ÊÔ´
-- ÏµÍ³µ÷ÓÃÖÐ(_Psyscall): µ±goµ÷ÓÃÔ­Éú´úÂë, Ô­Éú´úÂëÓÖ·´¹ýÀ´µ÷ÓÃgo´úÂëÊ±, Ê¹ÓÃµÄP»á±äÎª´Ë×´Ì¬
-- GCÍ£Ö¹ÖÐ(_Pgcstop): µ±gcÍ£Ö¹ÁËÕû¸öÊÀ½ç(STW)Ê±, P»á±äÎª´Ë×´Ì¬
-- ÒÑÖÐÖ¹(_Pdead): µ±PµÄÊýÁ¿ÔÚÔËÐÐÊ±¸Ä±ä, ÇÒÊýÁ¿¼õÉÙÊ±¶àÓàµÄP»á±äÎª´Ë×´Ì¬
+### Pçš„çŠ¶æ€
+- ç©ºé—²ä¸­(_Pidle): å½“Må‘çŽ°æ— å¾…è¿è¡Œçš„Gæ—¶ä¼šè¿›å…¥ä¼‘çœ , - è¿™æ—¶Mæ‹¥æœ‰çš„Pä¼šå˜ä¸ºç©ºé—²å¹¶åŠ åˆ°ç©ºé—²Pé“¾è¡¨ä¸­
+- è¿è¡Œä¸­(_Prunning): å½“Mæ‹¥æœ‰äº†ä¸€ä¸ªPåŽ, è¿™ä¸ªPçš„çŠ¶æ€å°±ä¼šå˜ä¸ºè¿è¡Œä¸­, Mè¿è¡ŒGä¼šä½¿ç”¨è¿™ä¸ªPä¸­çš„èµ„æº
+- ç³»ç»Ÿè°ƒç”¨ä¸­(_Psyscall): å½“goè°ƒç”¨åŽŸç”Ÿä»£ç , åŽŸç”Ÿä»£ç åˆåè¿‡æ¥è°ƒç”¨goä»£ç æ—¶, ä½¿ç”¨çš„Pä¼šå˜ä¸ºæ­¤çŠ¶æ€
+- GCåœæ­¢ä¸­(_Pgcstop): å½“gcåœæ­¢äº†æ•´ä¸ªä¸–ç•Œ(STW)æ—¶, Pä¼šå˜ä¸ºæ­¤çŠ¶æ€
+- å·²ä¸­æ­¢(_Pdead): å½“Pçš„æ•°é‡åœ¨è¿è¡Œæ—¶æ”¹å˜, ä¸”æ•°é‡å‡å°‘æ—¶å¤šä½™çš„Pä¼šå˜ä¸ºæ­¤çŠ¶æ€
 
-### ±¾µØÔËÐÐ¶ÓÁÐ
-- ÔÚgoÖÐÓÐ¶à¸öÔËÐÐ¶ÓÁÐ¿ÉÒÔ±£´æ´ýÔËÐÐ(_Grunnable)µÄG, ËüÃÇ·Ö±ðÊÇ¸÷¸öPÖÐµÄ±¾µØÔËÐÐ¶ÓÁÐºÍÈ«¾ÖÔËÐÐ¶ÓÁÐ.
-- Èë¶Ó´ýÔËÐÐµÄGÊ±»áÓÅÏÈ¼Óµ½µ±Ç°PµÄ±¾µØÔËÐÐ¶ÓÁÐ, M»ñÈ¡´ýÔËÐÐµÄGÊ±Ò²»áÓÅÏÈ´ÓÓµÓÐµÄPµÄ±¾µØÔËÐÐ¶ÓÁÐ»ñÈ¡
-- ±¾µØÔËÐÐ¶ÓÁÐÈë¶ÓºÍ³ö¶Ó²»ÐèÒªÊ¹ÓÃÏß³ÌËø.
-- ±¾µØÔËÐÐ¶ÓÁÐÓÐÊýÁ¿ÏÞÖÆ, µ±ÊýÁ¿´ïµ½256¸öÊ±»áÈë¶Óµ½È«¾ÖÔËÐÐ¶ÓÁÐ.
-- ±¾µØÔËÐÐ¶ÓÁÐµÄÊý¾Ý½á¹¹ÊÇ[»·ÐÎ¶ÓÁÐ](https://en.wikipedia.org/wiki/Circular_buffer), ÓÉÒ»¸ö256³¤¶ÈµÄÊý×éºÍÁ½¸öÐòºÅ(head, tail)×é³É.
-- µ±M´ÓPµÄ±¾µØÔËÐÐ¶ÓÁÐ»ñÈ¡GÊ±, Èç¹û·¢ÏÖ±¾µØ¶ÓÁÐÎª¿Õ»á³¢ÊÔ´ÓÆäËûPµÁÈ¡Ò»°ëµÄG¹ýÀ´,Õâ¸ö»úÖÆ½Ð×ö[Work Stealing](http://supertech.csail.mit.edu/papers/steal.pdf)¡£[Ô­ÎÄ](http://www.cnblogs.com/zkweb/p/7815600.html)ÖÐÓÐ´úÂë·ÖÎö
+### æœ¬åœ°è¿è¡Œé˜Ÿåˆ—
+- åœ¨goä¸­æœ‰å¤šä¸ªè¿è¡Œé˜Ÿåˆ—å¯ä»¥ä¿å­˜å¾…è¿è¡Œ(_Grunnable)çš„G, å®ƒä»¬åˆ†åˆ«æ˜¯å„ä¸ªPä¸­çš„æœ¬åœ°è¿è¡Œé˜Ÿåˆ—å’Œå…¨å±€è¿è¡Œé˜Ÿåˆ—.
+- å…¥é˜Ÿå¾…è¿è¡Œçš„Gæ—¶ä¼šä¼˜å…ˆåŠ åˆ°å½“å‰Pçš„æœ¬åœ°è¿è¡Œé˜Ÿåˆ—, MèŽ·å–å¾…è¿è¡Œçš„Gæ—¶ä¹Ÿä¼šä¼˜å…ˆä»Žæ‹¥æœ‰çš„Pçš„æœ¬åœ°è¿è¡Œé˜Ÿåˆ—èŽ·å–
+- æœ¬åœ°è¿è¡Œé˜Ÿåˆ—å…¥é˜Ÿå’Œå‡ºé˜Ÿä¸éœ€è¦ä½¿ç”¨çº¿ç¨‹é”.
+- æœ¬åœ°è¿è¡Œé˜Ÿåˆ—æœ‰æ•°é‡é™åˆ¶, å½“æ•°é‡è¾¾åˆ°256ä¸ªæ—¶ä¼šå…¥é˜Ÿåˆ°å…¨å±€è¿è¡Œé˜Ÿåˆ—.
+- æœ¬åœ°è¿è¡Œé˜Ÿåˆ—çš„æ•°æ®ç»“æž„æ˜¯[çŽ¯å½¢é˜Ÿåˆ—](https://en.wikipedia.org/wiki/Circular_buffer), ç”±ä¸€ä¸ª256é•¿åº¦çš„æ•°ç»„å’Œä¸¤ä¸ªåºå·(head, tail)ç»„æˆ.
+- å½“Mä»ŽPçš„æœ¬åœ°è¿è¡Œé˜Ÿåˆ—èŽ·å–Gæ—¶, å¦‚æžœå‘çŽ°æœ¬åœ°é˜Ÿåˆ—ä¸ºç©ºä¼šå°è¯•ä»Žå…¶ä»–Pç›—å–ä¸€åŠçš„Gè¿‡æ¥,è¿™ä¸ªæœºåˆ¶å«åš[Work Stealing](http://supertech.csail.mit.edu/papers/steal.pdf)ã€‚[åŽŸæ–‡](http://www.cnblogs.com/zkweb/p/7815600.html)ä¸­æœ‰ä»£ç åˆ†æž
 
-### È«¾ÖÔËÐÐ¶ÓÁÐ
-- È«¾ÖÔËÐÐ¶ÓÁÐ±£´æÔÚÈ«¾Ö±äÁ¿`sched`ÖÐ, È«¾ÖÔËÐÐ¶ÓÁÐÈë¶ÓºÍ³ö¶ÓÐèÒªÊ¹ÓÃÏß³ÌËø.
-- È«¾ÖÔËÐÐ¶ÓÁÐµÄÊý¾Ý½á¹¹ÊÇÁ´±í, ÓÉÁ½¸öÖ¸Õë(head, tail)×é³É.
+### å…¨å±€è¿è¡Œé˜Ÿåˆ—
+- å…¨å±€è¿è¡Œé˜Ÿåˆ—ä¿å­˜åœ¨å…¨å±€å˜é‡`sched`ä¸­, å…¨å±€è¿è¡Œé˜Ÿåˆ—å…¥é˜Ÿå’Œå‡ºé˜Ÿéœ€è¦ä½¿ç”¨çº¿ç¨‹é”.
+- å…¨å±€è¿è¡Œé˜Ÿåˆ—çš„æ•°æ®ç»“æž„æ˜¯é“¾è¡¨, ç”±ä¸¤ä¸ªæŒ‡é’ˆ(head, tail)ç»„æˆ.
 
-### ¿ÕÏÐMÁ´±í
-- µ±M·¢ÏÖÎÞ´ýÔËÐÐµÄGÊ±»á½øÈëÐÝÃß, ²¢Ìí¼Óµ½¿ÕÏÐMÁ´±íÖÐ, ¿ÕÏÐMÁ´±í±£´æÔÚÈ«¾Ö±äÁ¿`sched`.
-- ½øÈëÐÝÃßµÄM»áµÈ´ýÒ»¸öÐÅºÅÁ¿(`m.park`), »½ÐÑÐÝÃßµÄM»áÊ¹ÓÃÕâ¸öÐÅºÅÁ¿.
-- goÐèÒª±£Ö¤ÓÐ×ã¹»µÄM¿ÉÒÔÔËÐÐG, ÊÇÍ¨¹ýÕâÑùµÄ»úÖÆÊµÏÖµÄ:
-> - Èë¶Ó´ýÔËÐÐµÄGºó, Èç¹ûµ±Ç°ÎÞ×ÔÐýµÄMµ«ÊÇÓÐ¿ÕÏÐµÄP, ¾Í»½ÐÑ»òÕßÐÂ½¨Ò»¸öM
-> - µ±MÀë¿ª×ÔÐý×´Ì¬²¢×¼±¸ÔËÐÐ³ö¶ÓµÄGÊ±, Èç¹ûµ±Ç°ÎÞ×ÔÐýµÄMµ«ÊÇÓÐ¿ÕÏÐµÄP, ¾Í»½ÐÑ»òÕßÐÂ½¨Ò»¸öM
-> - µ±MÀë¿ª×ÔÐý×´Ì¬²¢×¼±¸ÐÝÃßÊ±, »áÔÚÀë¿ª×ÔÐý×´Ì¬ºóÔÙ´Î¼ì²éËùÓÐÔËÐÐ¶ÓÁÐ, Èç¹ûÓÐ´ýÔËÐÐµÄGÔòÖØÐÂ½øÈë×ÔÐý×´Ì¬
-- ÒòÎª"Èë¶Ó´ýÔËÐÐµÄG"ºÍ"MÀë¿ª×ÔÐý×´Ì¬"»áÍ¬Ê±½øÐÐ, go»áÊ¹ÓÃÕâÑùµÄ¼ì²éË³Ðò:
-> - Èë¶Ó´ýÔËÐÐµÄG => ÄÚ´æÆÁÕÏ => ¼ì²éµ±Ç°×ÔÐýµÄMÊýÁ¿ => »½ÐÑ»òÕßÐÂ½¨Ò»¸öM
-> - ¼õÉÙµ±Ç°×ÔÐýµÄMÊýÁ¿ => ÄÚ´æÆÁÕÏ => ¼ì²éËùÓÐÔËÐÐ¶ÓÁÐÊÇ·ñÓÐ´ýÔËÐÐµÄG => ÐÝÃß
->> ÕâÑù¿ÉÒÔ±£Ö¤²»»á³öÏÖ´ýÔËÐÐµÄGÈë¶ÓÁË, Ò²ÓÐ¿ÕÏÐµÄ×ÊÔ´P, µ«ÎÞMÈ¥Ö´ÐÐµÄÇé¿ö.
+### ç©ºé—²Mé“¾è¡¨
+- å½“Må‘çŽ°æ— å¾…è¿è¡Œçš„Gæ—¶ä¼šè¿›å…¥ä¼‘çœ , å¹¶æ·»åŠ åˆ°ç©ºé—²Mé“¾è¡¨ä¸­, ç©ºé—²Mé“¾è¡¨ä¿å­˜åœ¨å…¨å±€å˜é‡`sched`.
+- è¿›å…¥ä¼‘çœ çš„Mä¼šç­‰å¾…ä¸€ä¸ªä¿¡å·é‡(`m.park`), å”¤é†’ä¼‘çœ çš„Mä¼šä½¿ç”¨è¿™ä¸ªä¿¡å·é‡.
+- goéœ€è¦ä¿è¯æœ‰è¶³å¤Ÿçš„Må¯ä»¥è¿è¡ŒG, æ˜¯é€šè¿‡è¿™æ ·çš„æœºåˆ¶å®žçŽ°çš„:
+> - å…¥é˜Ÿå¾…è¿è¡Œçš„GåŽ, å¦‚æžœå½“å‰æ— è‡ªæ—‹çš„Mä½†æ˜¯æœ‰ç©ºé—²çš„P, å°±å”¤é†’æˆ–è€…æ–°å»ºä¸€ä¸ªM
+> - å½“Mç¦»å¼€è‡ªæ—‹çŠ¶æ€å¹¶å‡†å¤‡è¿è¡Œå‡ºé˜Ÿçš„Gæ—¶, å¦‚æžœå½“å‰æ— è‡ªæ—‹çš„Mä½†æ˜¯æœ‰ç©ºé—²çš„P, å°±å”¤é†’æˆ–è€…æ–°å»ºä¸€ä¸ªM
+> - å½“Mç¦»å¼€è‡ªæ—‹çŠ¶æ€å¹¶å‡†å¤‡ä¼‘çœ æ—¶, ä¼šåœ¨ç¦»å¼€è‡ªæ—‹çŠ¶æ€åŽå†æ¬¡æ£€æŸ¥æ‰€æœ‰è¿è¡Œé˜Ÿåˆ—, å¦‚æžœæœ‰å¾…è¿è¡Œçš„Gåˆ™é‡æ–°è¿›å…¥è‡ªæ—‹çŠ¶æ€
+- å› ä¸º"å…¥é˜Ÿå¾…è¿è¡Œçš„G"å’Œ"Mç¦»å¼€è‡ªæ—‹çŠ¶æ€"ä¼šåŒæ—¶è¿›è¡Œ, goä¼šä½¿ç”¨è¿™æ ·çš„æ£€æŸ¥é¡ºåº:
+> - å…¥é˜Ÿå¾…è¿è¡Œçš„G => å†…å­˜å±éšœ => æ£€æŸ¥å½“å‰è‡ªæ—‹çš„Mæ•°é‡ => å”¤é†’æˆ–è€…æ–°å»ºä¸€ä¸ªM
+> - å‡å°‘å½“å‰è‡ªæ—‹çš„Mæ•°é‡ => å†…å­˜å±éšœ => æ£€æŸ¥æ‰€æœ‰è¿è¡Œé˜Ÿåˆ—æ˜¯å¦æœ‰å¾…è¿è¡Œçš„G => ä¼‘çœ 
+>> è¿™æ ·å¯ä»¥ä¿è¯ä¸ä¼šå‡ºçŽ°å¾…è¿è¡Œçš„Gå…¥é˜Ÿäº†, ä¹Ÿæœ‰ç©ºé—²çš„èµ„æºP, ä½†æ— MåŽ»æ‰§è¡Œçš„æƒ…å†µ.
 
-### ¿ÕÏÐPÁ´±í
-µ±PµÄ±¾µØÔËÐÐ¶ÓÁÐÖÐµÄËùÓÐG¶¼ÔËÐÐÍê±Ï, ÓÖ²»ÄÜ´ÓÆäËûµØ·½ÄÃµ½GÊ±,
-ÓµÓÐPµÄM»áÊÍ·ÅP²¢½øÈëÐÝÃß×´Ì¬, ÊÍ·ÅµÄP»á±äÎª¿ÕÏÐ×´Ì¬²¢¼Óµ½¿ÕÏÐPÁ´±íÖÐ, ¿ÕÏÐPÁ´±í±£´æÔÚÈ«¾Ö±äÁ¿`sched`
-ÏÂ´Î´ýÔËÐÐµÄGÈë¶ÓÊ±Èç¹û·¢ÏÖÓÐ¿ÕÏÐµÄP, µ«ÊÇÓÖÃ»ÓÐ×ÔÐýÖÐµÄMÊ±»á»½ÐÑ»òÕßÐÂ½¨Ò»¸öM, M»áÓµÓÐÕâ¸öP, P»áÖØÐÂ±äÎªÔËÐÐÖÐµÄ×´Ì¬.
+### ç©ºé—²Pé“¾è¡¨
+å½“Pçš„æœ¬åœ°è¿è¡Œé˜Ÿåˆ—ä¸­çš„æ‰€æœ‰Géƒ½è¿è¡Œå®Œæ¯•, åˆä¸èƒ½ä»Žå…¶ä»–åœ°æ–¹æ‹¿åˆ°Gæ—¶,
+æ‹¥æœ‰Pçš„Mä¼šé‡Šæ”¾På¹¶è¿›å…¥ä¼‘çœ çŠ¶æ€, é‡Šæ”¾çš„Pä¼šå˜ä¸ºç©ºé—²çŠ¶æ€å¹¶åŠ åˆ°ç©ºé—²Pé“¾è¡¨ä¸­, ç©ºé—²Pé“¾è¡¨ä¿å­˜åœ¨å…¨å±€å˜é‡`sched`
+ä¸‹æ¬¡å¾…è¿è¡Œçš„Gå…¥é˜Ÿæ—¶å¦‚æžœå‘çŽ°æœ‰ç©ºé—²çš„P, ä½†æ˜¯åˆæ²¡æœ‰è‡ªæ—‹ä¸­çš„Mæ—¶ä¼šå”¤é†’æˆ–è€…æ–°å»ºä¸€ä¸ªM, Mä¼šæ‹¥æœ‰è¿™ä¸ªP, Pä¼šé‡æ–°å˜ä¸ºè¿è¡Œä¸­çš„çŠ¶æ€.
 
-## Êµ²Ù
-### G±»ÇÀÕ¼µ÷¶È
-- ³ý·Ç¼«¶ËµÄÎÞÏÞÑ­»·»òËÀÑ­»·£¬·ñÔòÖ»ÒªGµ÷ÓÃº¯Êý£¬Go runtime¾ÍÓÐÇÀÕ¼GµÄ»ú»á
-- Go³ÌÐòÆô¶¯Ê±£¬runtime»áÈ¥Æô¶¯Ò»¸öÃûÎª`sysmon`µÄm(Ò»°ã³ÆÎª¼à¿ØÏß³Ì)£¬¸ÃmÎÞÐè°ó¶¨p¼´¿ÉÔËÐÐ£¬¸ÃmÔÚÕû¸öGo³ÌÐòµÄÔËÐÐ¹ý³ÌÖÐÖÁ¹ØÖØÒª
-> - sysmonÃ¿20us~10msÆô¶¯Ò»´Î
->> - ÊÍ·ÅÏÐÖÃ³¬¹ý5·ÖÖÓµÄspanÎïÀíÄÚ´æ£»
->> - Èç¹û³¬¹ý2·ÖÖÓÃ»ÓÐÀ¬»ø»ØÊÕ£¬Ç¿ÖÆÖ´ÐÐ£»
->> - ½«³¤Ê±¼äÎ´´¦ÀíµÄnetpoll½á¹ûÌí¼Óµ½ÈÎÎñ¶ÓÁÐ£»
->> - Ïò³¤Ê±¼äÔËÐÐµÄGÈÎÎñ·¢³öÇÀÕ¼µ÷¶È£»
->> - ÊÕ»ØÒòsyscall³¤Ê±¼ä×èÈûµÄP£»
-> - Èç¹ûÒ»¸öGÈÎÎñÔËÐÐ10ms£¬sysmon¾Í»áÈÏÎªÆäÔËÐÐÊ±¼äÌ«¾Ã¶ø·¢³öÇÀÕ¼Ê½µ÷¶ÈµÄÇëÇó¡£Ò»µ©GµÄÇÀÕ¼±êÖ¾Î»±»ÉèÎªtrue£¬ÄÇÃ´´ýÕâ¸öGÏÂÒ»´Îµ÷ÓÃº¯Êý»ò·½·¨Ê±£¬runtime±ã¿ÉÒÔ½«GÇÀÕ¼£¬²¢ÒÆ³öÔËÐÐ×´Ì¬£¬·ÅÈëPµÄlocal runqÖÐ£¬µÈ´ýÏÂÒ»´Î±»µ÷¶È¡£
+## å®žæ“
+### Gè¢«æŠ¢å è°ƒåº¦
+- é™¤éžæžç«¯çš„æ— é™å¾ªçŽ¯æˆ–æ­»å¾ªçŽ¯ï¼Œå¦åˆ™åªè¦Gè°ƒç”¨å‡½æ•°ï¼ŒGo runtimeå°±æœ‰æŠ¢å Gçš„æœºä¼š
+- Goç¨‹åºå¯åŠ¨æ—¶ï¼Œruntimeä¼šåŽ»å¯åŠ¨ä¸€ä¸ªåä¸º`sysmon`çš„m(ä¸€èˆ¬ç§°ä¸ºç›‘æŽ§çº¿ç¨‹)ï¼Œè¯¥mæ— éœ€ç»‘å®špå³å¯è¿è¡Œï¼Œè¯¥måœ¨æ•´ä¸ªGoç¨‹åºçš„è¿è¡Œè¿‡ç¨‹ä¸­è‡³å…³é‡è¦
+> - sysmonæ¯20us~10mså¯åŠ¨ä¸€æ¬¡
+>> - é‡Šæ”¾é—²ç½®è¶…è¿‡5åˆ†é’Ÿçš„spanç‰©ç†å†…å­˜ï¼›
+>> - å¦‚æžœè¶…è¿‡2åˆ†é’Ÿæ²¡æœ‰åžƒåœ¾å›žæ”¶ï¼Œå¼ºåˆ¶æ‰§è¡Œï¼›
+>> - å°†é•¿æ—¶é—´æœªå¤„ç†çš„netpollç»“æžœæ·»åŠ åˆ°ä»»åŠ¡é˜Ÿåˆ—ï¼›
+>> - å‘é•¿æ—¶é—´è¿è¡Œçš„Gä»»åŠ¡å‘å‡ºæŠ¢å è°ƒåº¦ï¼›
+>> - æ”¶å›žå› syscallé•¿æ—¶é—´é˜»å¡žçš„Pï¼›
+> - å¦‚æžœä¸€ä¸ªGä»»åŠ¡è¿è¡Œ10msï¼Œsysmonå°±ä¼šè®¤ä¸ºå…¶è¿è¡Œæ—¶é—´å¤ªä¹…è€Œå‘å‡ºæŠ¢å å¼è°ƒåº¦çš„è¯·æ±‚ã€‚ä¸€æ—¦Gçš„æŠ¢å æ ‡å¿—ä½è¢«è®¾ä¸ºtrueï¼Œé‚£ä¹ˆå¾…è¿™ä¸ªGä¸‹ä¸€æ¬¡è°ƒç”¨å‡½æ•°æˆ–æ–¹æ³•æ—¶ï¼Œruntimeä¾¿å¯ä»¥å°†GæŠ¢å ï¼Œå¹¶ç§»å‡ºè¿è¡ŒçŠ¶æ€ï¼Œæ”¾å…¥Pçš„local runqä¸­ï¼Œç­‰å¾…ä¸‹ä¸€æ¬¡è¢«è°ƒåº¦ã€‚
 
-### channel×èÈû»ònetwork I/OÇé¿öÏÂµÄµ÷¶È
-Èç¹ûG±»×èÈûÔÚÄ³¸öchannel²Ù×÷»ònetwork I/O²Ù×÷ÉÏÊ±£¬G»á±»·ÅÖÃµ½Ä³¸öwait¶ÓÁÐÖÐ£¬¶øM»á³¢ÊÔÔËÐÐÏÂÒ»¸örunnableµÄG£»Èç¹û´ËÊ±Ã»ÓÐrunnableµÄG¹©mÔËÐÐ£¬ÄÇÃ´m½«½â°óP£¬²¢½øÈësleep×´Ì¬¡£µ±I/O available»òchannel²Ù×÷Íê³É£¬ÔÚwait¶ÓÁÐÖÐµÄG»á±»»½ÐÑ£¬±ê¼ÇÎªrunnable£¬·ÅÈëµ½Ä³PµÄ¶ÓÁÐÖÐ£¬°ó¶¨Ò»¸öM¼ÌÐøÖ´ÐÐ¡£
-### system call×èÈûÇé¿öÏÂµÄµ÷¶È
-Èç¹ûG±»×èÈûÔÚÄ³¸ösystem call²Ù×÷ÉÏ£¬ÄÇÃ´²»¹âG»á×èÈû£¬Ö´ÐÐ¸ÃGµÄMÒ²»á½â°óP(ÊµÖÊÊÇ±»sysmonÇÀ×ßÁË)£¬ÓëGÒ»Æð½øÈësleep×´Ì¬¡£Èç¹û´ËÊ±ÓÐidleµÄM£¬ÔòPÓëÆä°ó¶¨¼ÌÐøÖ´ÐÐÆäËûG£»Èç¹ûÃ»ÓÐidle M£¬µ«ÈÔÈ»ÓÐÆäËûGÒªÈ¥Ö´ÐÐ£¬ÄÇÃ´¾Í»á´´½¨Ò»¸öÐÂM¡£  
+### channelé˜»å¡žæˆ–network I/Oæƒ…å†µä¸‹çš„è°ƒåº¦
+å¦‚æžœGè¢«é˜»å¡žåœ¨æŸä¸ªchannelæ“ä½œæˆ–network I/Oæ“ä½œä¸Šæ—¶ï¼ŒGä¼šè¢«æ”¾ç½®åˆ°æŸä¸ªwaité˜Ÿåˆ—ä¸­ï¼Œè€ŒMä¼šå°è¯•è¿è¡Œä¸‹ä¸€ä¸ªrunnableçš„Gï¼›å¦‚æžœæ­¤æ—¶æ²¡æœ‰runnableçš„Gä¾›mè¿è¡Œï¼Œé‚£ä¹ˆmå°†è§£ç»‘Pï¼Œå¹¶è¿›å…¥sleepçŠ¶æ€ã€‚å½“I/O availableæˆ–channelæ“ä½œå®Œæˆï¼Œåœ¨waité˜Ÿåˆ—ä¸­çš„Gä¼šè¢«å”¤é†’ï¼Œæ ‡è®°ä¸ºrunnableï¼Œæ”¾å…¥åˆ°æŸPçš„é˜Ÿåˆ—ä¸­ï¼Œç»‘å®šä¸€ä¸ªMç»§ç»­æ‰§è¡Œã€‚
+### system callé˜»å¡žæƒ…å†µä¸‹çš„è°ƒåº¦
+å¦‚æžœGè¢«é˜»å¡žåœ¨æŸä¸ªsystem callæ“ä½œä¸Šï¼Œé‚£ä¹ˆä¸å…‰Gä¼šé˜»å¡žï¼Œæ‰§è¡Œè¯¥Gçš„Mä¹Ÿä¼šè§£ç»‘P(å®žè´¨æ˜¯è¢«sysmonæŠ¢èµ°äº†)ï¼Œä¸ŽGä¸€èµ·è¿›å…¥sleepçŠ¶æ€ã€‚å¦‚æžœæ­¤æ—¶æœ‰idleçš„Mï¼Œåˆ™Pä¸Žå…¶ç»‘å®šç»§ç»­æ‰§è¡Œå…¶ä»–Gï¼›å¦‚æžœæ²¡æœ‰idle Mï¼Œä½†ä»ç„¶æœ‰å…¶ä»–Gè¦åŽ»æ‰§è¡Œï¼Œé‚£ä¹ˆå°±ä¼šåˆ›å»ºä¸€ä¸ªæ–°Mã€‚  
 
-µ±×èÈûÔÚsyscallÉÏµÄGÍê³Ésyscallµ÷ÓÃºó£¬G»áÈ¥³¢ÊÔ»ñÈ¡Ò»¸ö¿ÉÓÃµÄP£¬Èç¹ûÃ»ÓÐ¿ÉÓÃµÄP£¬ÄÇÃ´G»á±»±ê¼ÇÎªrunnable£¬Ö®Ç°µÄÄÇ¸ösleepµÄM½«ÔÙ´Î½øÈësleep¡£
+å½“é˜»å¡žåœ¨syscallä¸Šçš„Gå®Œæˆsyscallè°ƒç”¨åŽï¼ŒGä¼šåŽ»å°è¯•èŽ·å–ä¸€ä¸ªå¯ç”¨çš„Pï¼Œå¦‚æžœæ²¡æœ‰å¯ç”¨çš„Pï¼Œé‚£ä¹ˆGä¼šè¢«æ ‡è®°ä¸ºrunnableï¼Œä¹‹å‰çš„é‚£ä¸ªsleepçš„Må°†å†æ¬¡è¿›å…¥sleepã€‚
 
-### ²Î¿¼ÎÄÕÂ
+### å‚è€ƒæ–‡ç« 
 - https://tonybai.com/2017/06/23/an-intro-about-goroutine-scheduler/
 - http://www.cnblogs.com/zkweb/p/7815600.html
+- [å¾®ä¿¡å…¬ä¼—å·æ–‡ç« ](https://mp.weixin.qq.com/s?__biz=Mzg3MTA0NDQ1OQ==&mid=2247483888&idx=1&sn=665fe9a84c2fb5e40624a1038f7b4fba&chksm=ce85c5f4f9f24ce289fcdf3b7dc308b84adc23d51c91e19fd77f4914649769558d3efed34358&mpshare=1&scene=2&srcid=&from=timeline&key=87a1c8d6f03747dccf54978634dfcede5c375343cc9bd743557e2dd8382bad6195543d606f9172f666274e3772918da568c8265e36e736cc1bec7b2c4d2a15315474cab8dafe59b6ce96a6a2a1db4245&ascene=14&uin=MjEwMjA3MTA2NQ%3D%3D&devicetype=Windows+10&version=62060739&lang=zh_CN&pass_ticket=Qi5GZ1CK7GE6Z044V9J3UuOu0is1A8QN4yh4%2B6SfTjxBG4yyOQTxzm%2FG4hToQO%2Fo)
