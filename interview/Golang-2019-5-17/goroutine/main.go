@@ -1,4 +1,4 @@
-package goroutine
+package main
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 
 func main() {
 	runtime.GOMAXPROCS(1)
-
+	fmt.Println("start")
 	go func() {
 		fmt.Println("hello")
 	}()
@@ -18,7 +18,6 @@ func main() {
 			i++
 		}
 	}()
-
 	select {
 
 	}
