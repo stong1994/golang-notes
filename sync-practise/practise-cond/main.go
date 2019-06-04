@@ -23,7 +23,7 @@ func main() {
 	c := sync.NewCond(&l)
 	flag := 5
 
-	for i:=0; i < 10; i++ {
+	for i := 0; i < 10; i++ {
 		go func(i int) {
 			c.L.Lock()
 			fmt.Printf("current i = %d, flag = %d, waitting... \n", i, flag)
@@ -68,5 +68,5 @@ func main() {
 	flag = 10
 	c.Broadcast()
 	c.L.Unlock()
-	time.Sleep(time.Second*10)
+	time.Sleep(time.Second * 10)
 }

@@ -7,9 +7,9 @@ import (
 )
 
 // 在高并发下同时读写map会报错
-func main()  {
+func main() {
 	m := &sync.Map{}
-	for i := 0; i < 100000; i ++ {
+	for i := 0; i < 100000; i++ {
 		go write(m, i, i*i)
 		go read(m, i)
 	}
@@ -22,7 +22,7 @@ func read(m *sync.Map, key int) (interface{}, bool) {
 	return m.Load(key)
 }
 
-func write(m *sync.Map, key, val int)  {
+func write(m *sync.Map, key, val int) {
 	m.Store(key, val)
 }
 

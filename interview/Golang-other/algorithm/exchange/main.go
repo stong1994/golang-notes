@@ -24,10 +24,10 @@ import "fmt"
 //}
 
 // 方法三 只适用于整数类型
-func main()  {
+func main() {
 	a, b := 10, 11 // 1010 1011
-	a = a ^ b // 0001
-	b = a ^ b // 1010
-	a = a ^ b // 1011
+	a = a ^ b      // 0001
+	b = a ^ b      // 1010
+	a = a ^ b      // 1011
 	fmt.Println(a, b)
 }

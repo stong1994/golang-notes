@@ -13,7 +13,7 @@ type rw bool // 读为true，写为false
 var r rw = true
 var w rw = false
 
-func main()  {
+func main() {
 	l := sync.RWMutex{}
 	ch := make(chan rw, 10)
 	start := time.Now().Unix()
@@ -28,7 +28,7 @@ func main()  {
 			l.RLock()
 			defer l.RUnlock()
 			fmt.Printf("读操作中，执行时间为2s，允许其他的读操作，但不允许写操作，index为%d。。。\n", i)
-			time.Sleep(time.Second*2)
+			time.Sleep(time.Second * 2)
 			ch <- r
 			fmt.Printf("读操作完成，index为%d\n", i)
 			fmt.Println("")
@@ -40,7 +40,7 @@ func main()  {
 			l.Lock()
 			defer l.Unlock()
 			fmt.Printf("写操作中，执行时间为3s，不允许其他的读操作和写操作, index为%d。。。\n", i)
-			time.Sleep(time.Second*3)
+			time.Sleep(time.Second * 3)
 			ch <- w
 			fmt.Printf("写操作完成, index为%d\n", i)
 			fmt.Println("")
@@ -48,9 +48,9 @@ func main()  {
 	}
 
 	for i := 0; i < 9; i++ {
-		if res := <- ch; res {
+		if res := <-ch; res {
 			// fmt.Println("正在进行读操作。。。")
-		}else {
+		} else {
 			// fmt.Println("正在进行写操作。。。")
 		}
 	}
@@ -86,4 +86,4 @@ func main()  {
 写操作完成, index为7
 
 程序总执行时间为 16s
- */
+*/

@@ -15,6 +15,6 @@
 7. 性能监控(可以从pprof或runtime来分析)
 8. 用context来取消子goroutine
 9. 信号的使用
-> 说实话，没用过，另外，信号对于通道的有点待研究。
+> 项目的graceful stop or restart。
 10. GC
 > 推荐链接：http://legendtkl.com/2017/04/28/golang-gc/

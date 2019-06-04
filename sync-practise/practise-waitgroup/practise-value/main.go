@@ -17,7 +17,7 @@ func main() {
 	}
 
 	for i := 0; i < 10; i++ {
-		if _, ok := <- ch; ok {
+		if _, ok := <-ch; ok {
 			val := v.Load().(int)
 			fmt.Println("val is ", val)
 		}

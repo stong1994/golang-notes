@@ -16,12 +16,11 @@ func main() {
 		l.Lock()
 		defer l.Unlock()
 		fmt.Println("锁定两秒")
-		time.Sleep(time.Second*2)
+		time.Sleep(time.Second * 2)
 	}()
 
-
 	fmt.Println("等待0.5秒,确保协程运行")
-	time.Sleep(time.Second/2)
+	time.Sleep(time.Second / 2)
 
 	// 尝试获取锁
 	l.Lock()
