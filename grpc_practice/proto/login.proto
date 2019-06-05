@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package gprcpractice;
+
+message LoginRequest {
+    string name = 1;    // 姓名
+    int32  age = 2;     // 年龄
+}
+
+message LoginResponse {
+    bool success = 1; // 结果 true-成功 false-失败
+}
+
+service UserServer {
+    rpc Login(LoginRequest) returns (LoginResponse) {}
+}
