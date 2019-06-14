@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"sync"
 	"time"
 )
@@ -88,15 +87,12 @@ func Update(ip string, t int64) {
 	// 如果ip是第一次访问，则初始化
 	if ips, ok := ipm.ips[ip]; !ok || ips.headNode == nil {
 		ipm.ips[ip] = NewNodeList(t)
+		ipm.ips[ip].headNode.AddOneVisit()
 		return
 	}
 	// 判断现在的访问时间和首节点的访问时间是否相隔
 	ipInfo := ipm.ips[ip].headNode
 	durHeadNum := (t - ipm.ips[ip].headTime) / int64(subNodeDur)
-	fmt.Println("subNodeDur", subNodeDur)
-	fmt.Println("ipm.ips[ip].headTime", ipm.ips[ip].headTime)
-	fmt.Println("t", t)
-	fmt.Println("durHeadNum", durHeadNum)
 	// 如果当前时间和head节点的时间间隔在限制的时间范围内，则直接在对应的节点 的访问数量+1
 	if durHeadNum < nodeNum {
 		for i := 0; i < int(durHeadNum); i++ {
@@ -105,8 +101,18 @@ func Update(ip string, t int64) {
 		ipInfo.AddOneVisit()
 		return
 	}
-	// 如果当前时间和head节点的时间间隔在限制的时间范围外，则需要判断当前的“head节点”，并将“过期”的节点重置并重新设置head节点
-	expireNum := durHeadNum - nodeNum // 计算有多少个节点“过期”了 todo 过期节点的处理及新生的节点处理
+	// 如果当前时间和head节点的时间间隔大于两倍总的限制时间，则清空所有的节点，并设置新的首节点时间，并将最后一个节点的num设为1
+	if durHeadNum >= 2*nodeNum-1 {
+		for i := 0; i < nodeNum; i++ {
+			ipInfo.ResetNum()
+			ipInfo = ipInfo.Next()
+		}
+		ipInfo.num = 1
+		ipm.ips[ip].headTime = t
+		return
+	}
+	// 如果当前时间和head节点的时间间隔在限制的时间的一到两倍之间，则需要判断当前的“head节点”，并将“过期”的节点重置并重新设置head节点
+	expireNum := durHeadNum - (nodeNum - 1) // 计算有多少个节点“过期”了
 	for i := 0; i < nodeNum; i++ {
 		if i < int(expireNum)-1 {
 			ipInfo.ResetNum()
@@ -114,6 +120,7 @@ func Update(ip string, t int64) {
 			ipInfo.num = 1
 		} else if i == int(expireNum) {
 			ipm.ips[ip].headNode = ipInfo
+			break
 		}
 		ipInfo = ipInfo.Next()
 	}

@@ -39,7 +39,7 @@ func TestNodeConsistency(t *testing.T) {
 func TestOneIpVisit1(t *testing.T) {
 	ip := "11111"
 	wg := sync.WaitGroup{}
-	for i := 0; i < limitNum+2; i++ {
+	for i := 0; i < limitNum+1; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -60,7 +60,7 @@ func TestOneIpVisit1(t *testing.T) {
 func TestOneIpVisit2(t *testing.T) {
 	ip := "22222"
 	wg := sync.WaitGroup{}
-	for i := 0; i < limitNum+1; i++ {
+	for i := 0; i < limitNum; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -81,7 +81,7 @@ func TestOneIpVisit2(t *testing.T) {
 func TestShouldInBlankList(t *testing.T) {
 	ip := "11111"
 	wg := sync.WaitGroup{}
-	for i := 0; i < limitNum+2; i++ {
+	for i := 0; i < limitNum+1; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -103,7 +103,7 @@ func TestShouldInBlankList(t *testing.T) {
 func TestShouldNotInBlankList(t *testing.T) {
 	ip := "22222"
 	wg := sync.WaitGroup{}
-	for i := 0; i < limitNum+1; i++ {
+	for i := 0; i < limitNum; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -125,7 +125,7 @@ func TestShouldNotInBlankList(t *testing.T) {
 func TestVisit101Dur11s(t *testing.T) {
 	ip := "22222"
 	wg := sync.WaitGroup{}
-	for i := 0; i < limitNum+1; i++ {
+	for i := 0; i < limitNum; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -149,26 +149,24 @@ func TestVisit101Dur11s(t *testing.T) {
 func TestVisit10Dur1s(t *testing.T) {
 	ip := "22222"
 	for i := 0; i < nodeNum+2; i++ {
-		func() {
-			wg := sync.WaitGroup{}
-			for i := 0; i < nodeNum; i++ {
-				wg.Add(1)
-				go func() {
-					defer wg.Done()
-					now := time.Now().UnixNano() / 1e6
-					Update(ip, now)
-				}()
-			}
-			wg.Wait()
-		}()
+		wg := sync.WaitGroup{}
+		for i := 0; i < nodeNum; i++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				now := time.Now().UnixNano() / 1e6
+				Update(ip, now)
+			}()
+		}
+		wg.Wait()
 		time.Sleep(time.Second)
-		for i := 10; i > 0; i-- {
+		/*for i := 10; i > 0; i-- {
 			ipm.locker.RLock()
 			fmt.Printf("%d \t", ipm.ips[ip].headNode.num)
 			ipm.ips[ip].headNode = ipm.ips[ip].headNode.next
 			ipm.locker.RUnlock()
 		}
-		fmt.Println()
+		fmt.Println()*/
 	}
 
 	if CheckIP(ip) {
@@ -179,10 +177,10 @@ func TestVisit10Dur1s(t *testing.T) {
 	}
 }
 
-// 测试同一个ip在1s访问11次是否在黑名单
+// 测试同一个ip在1s访问12次是否在黑名单
 func TestVisit11Dur1s(t *testing.T) {
 	ip := "22222"
-	for i := 0; i < nodeNum+2; i++ {
+	for i := 0; i < nodeNum+4; i++ {
 		wg := sync.WaitGroup{}
 		for i := 0; i < nodeNum+1; i++ {
 			wg.Add(1)
@@ -193,13 +191,87 @@ func TestVisit11Dur1s(t *testing.T) {
 			}()
 		}
 		wg.Wait()
-		fmt.Println(Sum(ip))
 		time.Sleep(time.Second)
+		/*for i := 10; i > 0; i-- {
+			ipm.locker.RLock()
+			fmt.Printf("%d \t", ipm.ips[ip].headNode.num)
+			ipm.ips[ip].headNode = ipm.ips[ip].headNode.next
+			ipm.locker.RUnlock()
+		}
+		fmt.Println()*/
 	}
-	t.Log("sum is", Sum(ip))
 	if !CheckIP(ip) {
 		t.Log("success")
 	} else {
+		t.Log("sum is", Sum(ip))
+		t.Fatal("should be added into blacklist")
+	}
+}
+
+// 测试同一个ip在10s后访问的节点分布情况
+func TestVisitAfter10s(t *testing.T) {
+	ip := "22222"
+	now := time.Now().UnixNano() / 1e6
+	Update(ip, now)
+	time.Sleep(10 * time.Second)
+	for i := 0; i < 11; i++ {
+		wg := sync.WaitGroup{}
+		for i := 0; i < nodeNum; i++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				now := time.Now().UnixNano() / 1e6
+				Update(ip, now)
+			}()
+		}
+		wg.Wait()
+		time.Sleep(time.Second)
+		for i := 10; i > 0; i-- {
+			ipm.locker.RLock()
+			fmt.Printf("%d \t", ipm.ips[ip].headNode.num)
+			ipm.ips[ip].headNode = ipm.ips[ip].headNode.next
+			ipm.locker.RUnlock()
+		}
+		fmt.Println()
+	}
+	if CheckIP(ip) {
+		t.Log("success")
+	} else {
+		t.Log("sum is", Sum(ip))
+		t.Fatal("should be added into blacklist")
+	}
+}
+
+// 测试同一个ip在10s后访问的节点分布情况
+func TestVisitAfter20s(t *testing.T) {
+	ip := "22222"
+	now := time.Now().UnixNano() / 1e6
+	Update(ip, now)
+	time.Sleep(20 * time.Second)
+	for i := 0; i < 11; i++ {
+		wg := sync.WaitGroup{}
+		for i := 0; i < nodeNum; i++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				now := time.Now().UnixNano() / 1e6
+				Update(ip, now)
+			}()
+		}
+		wg.Wait()
+		time.Sleep(time.Second)
+		for i := 10; i > 0; i-- {
+			ipm.locker.RLock()
+			fmt.Printf("%d \t", ipm.ips[ip].headNode.num)
+			ipm.ips[ip].headNode = ipm.ips[ip].headNode.next
+			ipm.locker.RUnlock()
+		}
+		fmt.Println()
+	}
+	if CheckIP(ip) {
+		t.Log("success")
+	} else {
+		t.Log("sum is", Sum(ip))
 		t.Fatal("should be added into blacklist")
 	}
 }
