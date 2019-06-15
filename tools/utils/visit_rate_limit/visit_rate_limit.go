@@ -10,6 +10,12 @@ import (
 	设置一个10个节点构成的环形链表来存放ip访问的次数。假如限制为10s内访问100次，那么每个节点间的间隔为1s，每次有ip访问，就将ip放入对应时间的节点，并将节点的访问次数加1，判断整个链表的
 访问次数是否超过了100次，如果超过了，就将ip放入黑名单。
 */
+type VisitLimit interface {
+	CheckIP(ip string) bool    // 检查ip是否在黑名单
+	Update(ip string, t int64) // 更新ip的环形链表
+	Sum(ip string) int         // 查看限制时间内的总访问量
+}
+
 const (
 	nodeNum   = 10
 	limitTime = 10 * 1000 // 限制时间 单位ms
@@ -25,7 +31,7 @@ type blankList struct {
 var blm = &blankList{make(map[string]int64), sync.RWMutex{}}
 
 // 没有在黑名单，返回false， 在黑名单返回true
-func inBlanckList(ip string) bool {
+func inBlankList(ip string) bool {
 	blm.locker.RLock()
 	defer blm.locker.RUnlock()
 	if _, ok := blm.list[ip]; ok {
@@ -49,7 +55,7 @@ type IpLimit struct {
 var ipm = &IpLimit{make(map[string]*NodeList), sync.RWMutex{}}
 
 func CheckIP(ip string) bool {
-	if inBlanckList(ip) {
+	if inBlankList(ip) {
 		return false
 	}
 	total := Sum(ip)
@@ -125,48 +131,4 @@ func Update(ip string, t int64) {
 		ipInfo = ipInfo.Next()
 	}
 	ipm.ips[ip].headTime = ipm.ips[ip].headTime + expireNum*int64(subNodeDur)
-}
-
-// 一个节点，存放一段时间内ip访问的次数
-type Node struct {
-	next *Node
-	num  int
-}
-
-func (n *Node) Next() *Node {
-	return n.next
-}
-
-func (n *Node) AddOneVisit() {
-	n.num++
-}
-
-func (n *Node) ResetNum() {
-	n.num = 0
-}
-
-func NewNode(next *Node) *Node {
-	return &Node{next: next, num: 0}
-}
-
-type NodeList struct {
-	headNode *Node
-	headTime int64
-}
-
-func NewNodeList(now int64) *NodeList {
-	node := new(Node) // 先建一个空的node来赋给最后的节点的next
-	for i := nodeNum - 1; i >= 0; i-- {
-		node = NewNode(node)
-	}
-	head := node
-	// 最后一个节点的next为空node，现在将它赋值为head todo 更简单的方法？
-	for {
-		if node.next.next == nil {
-			node.next = head
-			break
-		}
-		node = node.Next()
-	}
-	return &NodeList{headNode: head, headTime: now}
 }

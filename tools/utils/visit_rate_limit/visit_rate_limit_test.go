@@ -91,7 +91,7 @@ func TestShouldInBlankList(t *testing.T) {
 	}
 	wg.Wait()
 	CheckIP(ip)
-	if !inBlanckList(ip) {
+	if !inBlankList(ip) {
 		t.Log("success")
 	} else {
 		t.Log("sum is ", Sum(ip))
@@ -113,7 +113,7 @@ func TestShouldNotInBlankList(t *testing.T) {
 	}
 	wg.Wait()
 	CheckIP(ip)
-	if !inBlanckList(ip) {
+	if !inBlankList(ip) {
 		t.Log("success")
 	} else {
 		t.Log("sum is ", Sum(ip))
