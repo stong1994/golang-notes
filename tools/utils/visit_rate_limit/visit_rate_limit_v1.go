@@ -10,17 +10,12 @@ import (
 	设置一个10个节点构成的环形链表来存放ip访问的次数。假如限制为10s内访问100次，那么每个节点间的间隔为1s，每次有ip访问，就将ip放入对应时间的节点，并将节点的访问次数加1，判断整个链表的
 访问次数是否超过了100次，如果超过了，就将ip放入黑名单。
 */
-type VisitLimit interface {
+
+type IVisitLimit interface {
 	CheckIP(ip string) bool    // 检查ip是否在黑名单
 	Update(ip string, t int64) // 更新ip的环形链表
 	Sum(ip string) int         // 查看限制时间内的总访问量
 }
-
-const (
-	nodeNum   = 10
-	limitTime = 10 * 1000 // 限制时间 单位ms
-	limitNum  = 100       // 访问次数
-)
 
 type blankList struct {
 	list   map[string]int64
@@ -59,7 +54,7 @@ func CheckIP(ip string) bool {
 		return false
 	}
 	total := Sum(ip)
-	if total > limitNum {
+	if total > limitCount {
 		addBlankList(ip)
 		return false
 	}
@@ -77,7 +72,7 @@ func Sum(ip string) int {
 		}
 		num += ips.headNode.num
 		first := ips.headNode
-		for current := ips.headNode.Next(); current != first; current = current.Next() {
+		for current := ips.headNode.next; current != first; current = current.next {
 			num += current.num
 		}
 	}
@@ -86,49 +81,50 @@ func Sum(ip string) int {
 
 // 更新ip访问列表
 // 查看当前时间与ip的第一个节点的访问时间间隔多远
-func Update(ip string, t int64) {
+func Update(ip string) {
 	ipm.locker.Lock()
 	defer ipm.locker.Unlock()
-	subNodeDur := limitTime / nodeNum // 每个节点的时间间隔
+	t := time.Now().UnixNano()/1e6
+	subNodeDur := limitDuration / nodeCount // 每个节点的时间间隔
 	// 如果ip是第一次访问，则初始化
 	if ips, ok := ipm.ips[ip]; !ok || ips.headNode == nil {
 		ipm.ips[ip] = NewNodeList(t)
-		ipm.ips[ip].headNode.AddOneVisit()
+		ipm.ips[ip].headNode.num++
 		return
 	}
 	// 判断现在的访问时间和首节点的访问时间是否相隔
 	ipInfo := ipm.ips[ip].headNode
 	durHeadNum := (t - ipm.ips[ip].headTime) / int64(subNodeDur)
 	// 如果当前时间和head节点的时间间隔在限制的时间范围内，则直接在对应的节点 的访问数量+1
-	if durHeadNum < nodeNum {
+	if durHeadNum < nodeCount {
 		for i := 0; i < int(durHeadNum); i++ {
-			ipInfo = ipInfo.Next()
+			ipInfo = ipInfo.next
 		}
-		ipInfo.AddOneVisit()
+		ipInfo.num++
 		return
 	}
 	// 如果当前时间和head节点的时间间隔大于两倍总的限制时间，则清空所有的节点，并设置新的首节点时间，并将最后一个节点的num设为1
-	if durHeadNum >= 2*nodeNum-1 {
-		for i := 0; i < nodeNum; i++ {
-			ipInfo.ResetNum()
-			ipInfo = ipInfo.Next()
+	if durHeadNum >= 2*nodeCount-1 {
+		for i := 0; i < nodeCount; i++ {
+			ipInfo.num = 0
+			ipInfo = ipInfo.next
 		}
 		ipInfo.num = 1
 		ipm.ips[ip].headTime = t
 		return
 	}
 	// 如果当前时间和head节点的时间间隔在限制的时间的一到两倍之间，则需要判断当前的“head节点”，并将“过期”的节点重置并重新设置head节点
-	expireNum := durHeadNum - (nodeNum - 1) // 计算有多少个节点“过期”了
-	for i := 0; i < nodeNum; i++ {
+	expireNum := durHeadNum - (nodeCount - 1) // 计算有多少个节点“过期”了
+	for i := 0; i < nodeCount; i++ {
 		if i < int(expireNum)-1 {
-			ipInfo.ResetNum()
+			ipInfo.num = 0
 		} else if i == int(expireNum)-1 {
 			ipInfo.num = 1
 		} else if i == int(expireNum) {
 			ipm.ips[ip].headNode = ipInfo
 			break
 		}
-		ipInfo = ipInfo.Next()
+		ipInfo = ipInfo.next
 	}
 	ipm.ips[ip].headTime = ipm.ips[ip].headTime + expireNum*int64(subNodeDur)
 }

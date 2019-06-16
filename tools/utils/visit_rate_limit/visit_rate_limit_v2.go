@@ -11,7 +11,9 @@ type VisitLimitV2 interface {
 }
 
 const (
-	limitCount, limitDuration, nodeCount int64 = 100, 10 * 1000, 10
+	limitCount = 100
+	limitDuration = 10 * 1000
+	nodeCount = 10
 )
 
 type IpOperation func(ipList map[string]*NodeList, blankList map[string]int64)
@@ -109,16 +111,16 @@ func (vo *VisitOperation) Update(ip string) {
 		durHead := now - ipList[ip].headTime
 		headNode := ipList[ip].headNode
 		if durHead < limitDuration {
-			nodeNum := (limitDuration - durHead) / durPerNode
+			nodeNum := (limitDuration - int(durHead)) / durPerNode
 			for i := 0; i < int(nodeNum); i++ {
 				headNode = headNode.next
 			}
-			headNode.AddOneVisit()
+			headNode.num++
 			return
 		}
 		// 如果当前时间与head节点的时间差超过了限制时间的两倍，也就是说前一段时间内没有访问，则重新计算——直接清空整个链表，重置首节点时间，并将首节点访问量记为1
 		if durHead >= 2*limitDuration {
-			for i := 0; i < int(nodeNum); i++ {
+			for i := 0; i < nodeCount; i++ {
 				headNode.num = 0
 				headNode = headNode.next
 			}
@@ -126,14 +128,14 @@ func (vo *VisitOperation) Update(ip string) {
 			return
 		}
 		// 如果当前时间与head节点的时间差在限制时间的一到两倍之间，则有些节点“过期”，需要选择新的首节点和首节点时间，并将过期的节点覆盖掉
-		expireCount := (durHead-limitDuration)/durPerNode + 1 // 距离head节点刚好过期时，(durHead - limitDuration) / durPerNode 为0，需要加1
-		for i := 0; i < int(expireCount)-1; i++ {
+		expireCount := (int(durHead)-limitDuration)/durPerNode + 1 // 距离head节点刚好过期时，(durHead - limitDuration) / durPerNode 为0，需要加1
+		for i := 0; i < expireCount-1; i++ {
 			headNode.num = 0
 			headNode = headNode.next
 		}
 		headNode.num = 1
 		ipList[ip].headNode = headNode.next
-		ipList[ip].headTime = ipList[ip].headTime + expireCount*durPerNode
+		ipList[ip].headTime = ipList[ip].headTime + int64(expireCount*durPerNode)
 	}
 	vo.opCh <- op
 }

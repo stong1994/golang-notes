@@ -14,8 +14,8 @@ func TestNodeListValid(t *testing.T) {
 	if node == nil {
 		t.Fatal("node is nil")
 	}
-	for i := 0; i < nodeNum*2; i++ {
-		node = node.Next()
+	for i := 0; i < nodeCount*2; i++ {
+		node = node.next
 		if node == nil {
 			t.Fatal("node is nil")
 		}
@@ -27,8 +27,8 @@ func TestNodeConsistency(t *testing.T) {
 	list := NewNodeList(time.Now().UnixNano() / 1e6)
 	node := list.headNode
 	first := node
-	for i := 0; i < nodeNum; i++ {
-		node = node.Next()
+	for i := 0; i < nodeCount; i++ {
+		node = node.next
 	}
 	if first != node {
 		t.Fatal("began and end should equal")
@@ -39,12 +39,11 @@ func TestNodeConsistency(t *testing.T) {
 func TestOneIpVisit1(t *testing.T) {
 	ip := "11111"
 	wg := sync.WaitGroup{}
-	for i := 0; i < limitNum+1; i++ {
+	for i := 0; i < limitCount+1; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			now := time.Now().UnixNano() / 1e6
-			Update(ip, now)
+			Update(ip)
 		}()
 	}
 	wg.Wait()
@@ -60,12 +59,11 @@ func TestOneIpVisit1(t *testing.T) {
 func TestOneIpVisit2(t *testing.T) {
 	ip := "22222"
 	wg := sync.WaitGroup{}
-	for i := 0; i < limitNum; i++ {
+	for i := 0; i < limitCount; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			now := time.Now().UnixNano() / 1e6
-			Update(ip, now)
+			Update(ip)
 		}()
 	}
 	wg.Wait()
@@ -81,12 +79,11 @@ func TestOneIpVisit2(t *testing.T) {
 func TestShouldInBlankList(t *testing.T) {
 	ip := "11111"
 	wg := sync.WaitGroup{}
-	for i := 0; i < limitNum+1; i++ {
+	for i := 0; i < limitCount+1; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			now := time.Now().UnixNano() / 1e6
-			Update(ip, now)
+			Update(ip)
 		}()
 	}
 	wg.Wait()
@@ -103,12 +100,11 @@ func TestShouldInBlankList(t *testing.T) {
 func TestShouldNotInBlankList(t *testing.T) {
 	ip := "22222"
 	wg := sync.WaitGroup{}
-	for i := 0; i < limitNum; i++ {
+	for i := 0; i < limitCount; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			now := time.Now().UnixNano() / 1e6
-			Update(ip, now)
+			Update(ip)
 		}()
 	}
 	wg.Wait()
@@ -125,17 +121,16 @@ func TestShouldNotInBlankList(t *testing.T) {
 func TestVisit101Dur11s(t *testing.T) {
 	ip := "22222"
 	wg := sync.WaitGroup{}
-	for i := 0; i < limitNum; i++ {
+	for i := 0; i < limitCount; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			now := time.Now().UnixNano() / 1e6
-			Update(ip, now)
+			Update(ip)
 		}()
 	}
 	wg.Wait()
 	time.Sleep(10 * time.Second)
-	Update(ip, time.Now().UnixNano()/1e6)
+	Update(ip)
 
 	if CheckIP(ip) {
 		t.Log("success")
@@ -148,14 +143,13 @@ func TestVisit101Dur11s(t *testing.T) {
 // 测试同一个ip在1s访问10次是否在黑名单
 func TestVisit10Dur1s(t *testing.T) {
 	ip := "22222"
-	for i := 0; i < nodeNum+2; i++ {
+	for i := 0; i < nodeCount+2; i++ {
 		wg := sync.WaitGroup{}
-		for i := 0; i < nodeNum; i++ {
+		for i := 0; i < nodeCount; i++ {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				now := time.Now().UnixNano() / 1e6
-				Update(ip, now)
+				Update(ip)
 			}()
 		}
 		wg.Wait()
@@ -180,14 +174,13 @@ func TestVisit10Dur1s(t *testing.T) {
 // 测试同一个ip在1s访问12次是否在黑名单
 func TestVisit11Dur1s(t *testing.T) {
 	ip := "22222"
-	for i := 0; i < nodeNum+4; i++ {
+	for i := 0; i < nodeCount+4; i++ {
 		wg := sync.WaitGroup{}
-		for i := 0; i < nodeNum+1; i++ {
+		for i := 0; i < nodeCount+1; i++ {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				now := time.Now().UnixNano() / 1e6
-				Update(ip, now)
+				Update(ip)
 			}()
 		}
 		wg.Wait()
@@ -211,17 +204,15 @@ func TestVisit11Dur1s(t *testing.T) {
 // 测试同一个ip在10s后访问的节点分布情况
 func TestVisitAfter10s(t *testing.T) {
 	ip := "22222"
-	now := time.Now().UnixNano() / 1e6
-	Update(ip, now)
+	Update(ip)
 	time.Sleep(10 * time.Second)
 	for i := 0; i < 11; i++ {
 		wg := sync.WaitGroup{}
-		for i := 0; i < nodeNum; i++ {
+		for i := 0; i < nodeCount; i++ {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				now := time.Now().UnixNano() / 1e6
-				Update(ip, now)
+				Update(ip)
 			}()
 		}
 		wg.Wait()
@@ -245,17 +236,15 @@ func TestVisitAfter10s(t *testing.T) {
 // 测试同一个ip在10s后访问的节点分布情况
 func TestVisitAfter20s(t *testing.T) {
 	ip := "22222"
-	now := time.Now().UnixNano() / 1e6
-	Update(ip, now)
+	Update(ip)
 	time.Sleep(20 * time.Second)
 	for i := 0; i < 11; i++ {
 		wg := sync.WaitGroup{}
-		for i := 0; i < nodeNum; i++ {
+		for i := 0; i < nodeCount; i++ {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				now := time.Now().UnixNano() / 1e6
-				Update(ip, now)
+				Update(ip)
 			}()
 		}
 		wg.Wait()

@@ -39,7 +39,7 @@ func TestAccess100Dur10S(t *testing.T) {
 
 	ip := "11111"
 	wg := sync.WaitGroup{}
-	for i := 0; i < int(limitCount); i++ {
+	for i := 0; i < limitCount; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -47,7 +47,7 @@ func TestAccess100Dur10S(t *testing.T) {
 		}()
 	}
 	wg.Wait()
-	if !vo.CheckIp(ip) {
+	if !vo.CheckIp(ip) && vo.Sum(ip) != limitCount {
 		t.Log(vo.Sum(ip))
 		t.Fatal("should be valid")
 	} else {
@@ -205,4 +205,118 @@ func TestValidAfter20S(t *testing.T) {
 		t.Log(vo.Sum(ip))
 		t.Fatal("should be valid")
 	}
+}
+
+// 性能测试 v1-读 /
+// BenchmarkV1Read-16    	2000000000	          0.03 ns/op
+func BenchmarkV1Read(b *testing.B) {
+	ip := "11111"
+	wg := sync.WaitGroup{}
+	for i := 0; i < 100000; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			CheckIP(ip)
+		}()
+	}
+	wg.Wait()
+}
+
+// 性能测试 v2-读 /
+// BenchmarkV2Read-16    	2000000000	         0.09 ns/op
+func BenchmarkV2Read(b *testing.B) {
+	vo := NewVisitOperation()
+	vo.Start()
+
+	ip := "11111"
+	wg := sync.WaitGroup{}
+	for i := 0; i < 100000; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			vo.CheckIp(ip)
+		}()
+	}
+	wg.Wait()
+}
+
+// 性能测试 v1-写 /
+// BenchmarkV1Write-16    	2000000000	        0.03 ns/op
+func BenchmarkV1Write(b *testing.B) {
+	ip := "11111"
+	wg := sync.WaitGroup{}
+	for i := 0; i < 100000; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			Update(ip)
+		}()
+	}
+	wg.Wait()
+}
+
+// 性能测试 v2-写 /
+// BenchmarkV2Write-16    	2000000000	         0.10 ns/op
+func BenchmarkV2Write(b *testing.B) {
+	vo := NewVisitOperation()
+	vo.Start()
+
+	ip := "11111"
+	wg := sync.WaitGroup{}
+	for i := 0; i < 100000; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			vo.Update(ip)
+		}()
+	}
+	wg.Wait()
+}
+
+// 性能测试 v1-读写 /
+// BenchmarkV1Write-16    	2000000000	         0.06 ns/op
+func BenchmarkV1RW(b *testing.B) {
+	ip := "11111"
+	wg := sync.WaitGroup{}
+	for i := 0; i < 50000; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			CheckIP(ip)
+		}()
+	}
+	for i := 0; i < 50000; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			Update(ip)
+		}()
+	}
+
+	wg.Wait()
+}
+
+// 性能测试 v2-读写 /
+// BenchmarkV2Write-16    	2000000000	         0.09 ns/op
+func BenchmarkV2RW(b *testing.B) {
+	vo := NewVisitOperation()
+	vo.Start()
+
+	ip := "11111"
+	wg := sync.WaitGroup{}
+	for i := 0; i < 50000; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			vo.CheckIp(ip)
+		}()
+	}
+	for i := 0; i < 50000; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			vo.Update(ip)
+		}()
+	}
+	wg.Wait()
 }

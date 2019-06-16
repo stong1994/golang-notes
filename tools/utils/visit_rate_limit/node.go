@@ -8,18 +8,6 @@ type Node struct {
 	num  int
 }
 
-func (n *Node) Next() *Node {
-	return n.next
-}
-
-func (n *Node) AddOneVisit() {
-	n.num++
-}
-
-func (n *Node) ResetNum() {
-	n.num = 0
-}
-
 func NewNode(next *Node) *Node {
 	return &Node{next: next, num: 0}
 }
@@ -31,7 +19,7 @@ type NodeList struct {
 
 func NewNodeList(now int64) *NodeList {
 	node := new(Node) // 先建一个空的node来赋给最后的节点的next
-	for i := nodeNum - 1; i >= 0; i-- {
+	for i := nodeCount - 1; i >= 0; i-- {
 		node = NewNode(node)
 	}
 	head := node
@@ -41,7 +29,7 @@ func NewNodeList(now int64) *NodeList {
 			node.next = head
 			break
 		}
-		node = node.Next()
+		node = node.next
 	}
 	return &NodeList{headNode: head, headTime: now}
 }
