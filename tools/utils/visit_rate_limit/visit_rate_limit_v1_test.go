@@ -264,3 +264,38 @@ func TestVisitAfter20s(t *testing.T) {
 		t.Fatal("should be added into blacklist")
 	}
 }
+
+// 测试第一秒访问10次，然后第2秒访问90次,然后第11秒访问1次
+func TestValidAfter10Sv1(t *testing.T) {
+	ip := "11111"
+
+	wg := sync.WaitGroup{}
+	for i := 0; i < 10; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			Update(ip)
+		}()
+	}
+	time.Sleep(time.Second)
+	wg.Wait()
+
+	for i := 0; i < 90; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			Update(ip)
+		}()
+	}
+	time.Sleep(time.Second * 9)
+	wg.Wait()
+
+	Update(ip)
+
+	if CheckIP(ip) && Sum(ip) == 91 {
+		t.Log(SUCCESS)
+	} else {
+		t.Log(Sum(ip))
+		t.Fatal("should be valid")
+	}
+}
