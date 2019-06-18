@@ -88,7 +88,7 @@ func TestShouldInBlankList(t *testing.T) {
 	}
 	wg.Wait()
 	CheckIP(ip)
-	if !inBlankList(ip) {
+	if !checkInBlankList(ip) {
 		t.Log("success")
 	} else {
 		t.Log("sum is ", Sum(ip))
@@ -109,7 +109,7 @@ func TestShouldNotInBlankList(t *testing.T) {
 	}
 	wg.Wait()
 	CheckIP(ip)
-	if !inBlankList(ip) {
+	if !checkInBlankList(ip) {
 		t.Log("success")
 	} else {
 		t.Log("sum is ", Sum(ip))
@@ -218,10 +218,10 @@ func TestVisitAfter10s(t *testing.T) {
 		wg.Wait()
 		time.Sleep(time.Second)
 		for i := 10; i > 0; i-- {
-			ipm.locker.RLock()
-			fmt.Printf("%d \t", ipm.ips[ip].headNode.num)
-			ipm.ips[ip].headNode = ipm.ips[ip].headNode.next
-			ipm.locker.RUnlock()
+			ipLimitInfos.locker.RLock()
+			fmt.Printf("%d \t", ipLimitInfos.ips[ip].headNode.num)
+			ipLimitInfos.ips[ip].headNode = ipLimitInfos.ips[ip].headNode.next
+			ipLimitInfos.locker.RUnlock()
 		}
 		fmt.Println()
 	}
@@ -250,10 +250,10 @@ func TestVisitAfter20s(t *testing.T) {
 		wg.Wait()
 		time.Sleep(time.Second)
 		for i := 10; i > 0; i-- {
-			ipm.locker.RLock()
-			fmt.Printf("%d \t", ipm.ips[ip].headNode.num)
-			ipm.ips[ip].headNode = ipm.ips[ip].headNode.next
-			ipm.locker.RUnlock()
+			ipLimitInfos.locker.RLock()
+			fmt.Printf("%d \t", ipLimitInfos.ips[ip].headNode.num)
+			ipLimitInfos.ips[ip].headNode = ipLimitInfos.ips[ip].headNode.next
+			ipLimitInfos.locker.RUnlock()
 		}
 		fmt.Println()
 	}

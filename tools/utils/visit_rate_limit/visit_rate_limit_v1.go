@@ -11,34 +11,34 @@ import (
 访问次数是否超过了100次，如果超过了，就将ip放入黑名单。
 */
 
-type IVisitLimit interface {
+/*
 	CheckIP(ip string) bool    // 检查ip是否在黑名单
 	Update(ip string, t int64) // 更新ip的环形链表
 	Sum(ip string) int         // 查看限制时间内的总访问量
-}
+*/
 
-type blankList struct {
+type blankListModel struct {
 	list   map[string]int64
 	locker sync.RWMutex
 }
 
 // 一个全局的map，用来存储黑名单
-var blm = &blankList{make(map[string]int64), sync.RWMutex{}}
+var blankList = &blankListModel{make(map[string]int64), sync.RWMutex{}}
 
 // 没有在黑名单，返回false， 在黑名单返回true
-func inBlankList(ip string) bool {
-	blm.locker.RLock()
-	defer blm.locker.RUnlock()
-	if _, ok := blm.list[ip]; ok {
+func checkInBlankList(ip string) bool {
+	blankList.locker.RLock()
+	defer blankList.locker.RUnlock()
+	if _, ok := blankList.list[ip]; ok {
 		return false
 	}
 	return false
 }
 
 func addBlankList(ip string) {
-	blm.locker.Lock()
-	defer blm.locker.Unlock()
-	blm.list[ip] = time.Now().Unix()
+	blankList.locker.Lock()
+	defer blankList.locker.Unlock()
+	blankList.list[ip] = time.Now().Unix()
 }
 
 type IpLimit struct {
@@ -47,10 +47,10 @@ type IpLimit struct {
 }
 
 // 一个全局的map，用来存储ip信息
-var ipm = &IpLimit{make(map[string]*NodeList), sync.RWMutex{}}
+var ipLimitInfos = &IpLimit{make(map[string]*NodeList), sync.RWMutex{}}
 
 func CheckIP(ip string) bool {
-	if inBlankList(ip) {
+	if checkInBlankList(ip) {
 		return false
 	}
 	total := Sum(ip)
@@ -63,10 +63,10 @@ func CheckIP(ip string) bool {
 
 // 返回ip在限制时间内访问的总次数
 func Sum(ip string) int {
-	ipm.locker.RLock()
-	defer ipm.locker.RUnlock()
+	ipLimitInfos.locker.RLock()
+	defer ipLimitInfos.locker.RUnlock()
 	num := 0
-	if ips, ok := ipm.ips[ip]; ok {
+	if ips, ok := ipLimitInfos.ips[ip]; ok {
 		if ips.headNode == nil {
 			panic("can not be nil")
 		}
@@ -82,19 +82,19 @@ func Sum(ip string) int {
 // 更新ip访问列表
 // 查看当前时间与ip的第一个节点的访问时间间隔多远
 func Update(ip string) {
-	ipm.locker.Lock()
-	defer ipm.locker.Unlock()
+	ipLimitInfos.locker.Lock()
+	defer ipLimitInfos.locker.Unlock()
 	t := time.Now().UnixNano()/1e6
 	subNodeDur := limitDuration / nodeCount // 每个节点的时间间隔
 	// 如果ip是第一次访问，则初始化
-	if ips, ok := ipm.ips[ip]; !ok || ips.headNode == nil {
-		ipm.ips[ip] = NewNodeList(t)
-		ipm.ips[ip].headNode.num++
+	if ips, ok := ipLimitInfos.ips[ip]; !ok || ips.headNode == nil {
+		ipLimitInfos.ips[ip] = NewNodeList(t)
+		ipLimitInfos.ips[ip].headNode.num++
 		return
 	}
 	// 判断现在的访问时间和首节点的访问时间是否相隔
-	ipInfo := ipm.ips[ip].headNode
-	durHeadNum := (t - ipm.ips[ip].headTime) / int64(subNodeDur)
+	ipInfo := ipLimitInfos.ips[ip].headNode
+	durHeadNum := (t - ipLimitInfos.ips[ip].headTime) / int64(subNodeDur)
 	// 如果当前时间和head节点的时间间隔在限制的时间范围内，则直接在对应的节点 的访问数量+1
 	if durHeadNum < nodeCount {
 		for i := 0; i < int(durHeadNum); i++ {
@@ -110,7 +110,7 @@ func Update(ip string) {
 			ipInfo = ipInfo.next
 		}
 		ipInfo.num = 1
-		ipm.ips[ip].headTime = t
+		ipLimitInfos.ips[ip].headTime = t
 		return
 	}
 	// 如果当前时间和head节点的时间间隔在限制的时间的一到两倍之间，则需要判断当前的“head节点”，并将“过期”的节点重置并重新设置head节点
@@ -121,10 +121,10 @@ func Update(ip string) {
 		} else if i == int(expireNum)-1 {
 			ipInfo.num = 1
 		} else if i == int(expireNum) {
-			ipm.ips[ip].headNode = ipInfo
+			ipLimitInfos.ips[ip].headNode = ipInfo
 			break
 		}
 		ipInfo = ipInfo.next
 	}
-	ipm.ips[ip].headTime = ipm.ips[ip].headTime + expireNum*int64(subNodeDur)
+	ipLimitInfos.ips[ip].headTime = ipLimitInfos.ips[ip].headTime + expireNum*int64(subNodeDur)
 }
