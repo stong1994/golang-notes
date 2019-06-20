@@ -1,19 +1,32 @@
 package rand_num
 
 import (
-	"crypto/rand"
+	cRand "crypto/rand"
+	"fmt"
 	"math/big"
+	mRand "math/rand"
+	"time"
 )
 
 // 获取随机值
-func RandNum(max int64) int64 {
-	index, err := rand.Int(rand.Reader, big.NewInt(max))
+func CryptoRandNum(max int64) int64 {
+	index, err := cRand.Int(cRand.Reader, big.NewInt(max))
 	if err != nil {
-		return RandNum(max)
+		fmt.Println("aaaaaaa")
+		return CryptoRandNum(max)
 	}
-	i := index.Int64()
-	if i < 0 {
-		return RandNum(max)
+	return index.Int64()
+}
+
+func MathRandNum(max int64) int64 {
+	mRand.Seed(time.Now().Unix())
+	return mRand.Int63n(max)
+}
+
+func RandNum(max int64) int64 {
+	index, err := cRand.Int(cRand.Reader, big.NewInt(max))
+	if err != nil {
+		return MathRandNum(max)
 	}
-	return i
+	return index.Int64()
 }
