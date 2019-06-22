@@ -19,15 +19,15 @@ type Adapter interface {
 	Request() string
 }
 
-type adaptee struct {
+type adapter struct {
 }
 
-func (adaptee) Request() string {
+func (adapter) Request() string {
 	return ""
 }
 
 func NewAdapter() Adapter {
-	return &adaptee{}
+	return &adapter{}
 }
 
 // 定义目标接口(新的接口)
