@@ -12,7 +12,6 @@ import (
 func CryptoRandNum(max int64) int64 {
 	index, err := cRand.Int(cRand.Reader, big.NewInt(max))
 	if err != nil {
-		fmt.Println("aaaaaaa")
 		return CryptoRandNum(max)
 	}
 	return index.Int64()
