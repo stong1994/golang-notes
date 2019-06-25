@@ -10,6 +10,7 @@
 享元模式|flyweight
 代理模式|proxy
 外观模式|facade
+表驱动模式|table_driven
 
 
 参考文章: https://blog.51cto.com/14378068/2411614
