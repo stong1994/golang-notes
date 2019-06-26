@@ -12,3 +12,4 @@
 代理模式|proxy
 外观模式|facade
 表驱动模式|table_driven
+创建者模式|builder
