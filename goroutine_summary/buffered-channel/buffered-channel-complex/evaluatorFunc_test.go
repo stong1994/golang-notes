@@ -10,6 +10,6 @@ func TestEvaluatorFunc(t *testing.T) {
 		return nil, nil
 	})
 
-	fmt.Println(fun1.Name())      // buffered-channel-complex.TestEvaluatorFunc.func1
-	fmt.Println(fun1.Evaluate(1)) // <nil> <nil>
+	fmt.Println(Name())      // buffered-channel-complex.TestEvaluatorFunc.func1
+	fmt.Println(Evaluate(1)) // <nil> <nil>
 }

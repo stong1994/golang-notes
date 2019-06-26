@@ -28,7 +28,7 @@ func TestPool(t *testing.T) {
 				/*p.Run(func(v interface{}) {
 					time.Sleep(100 * time.Millisecond)
 				})*/
-				err := p.RunWithTimeout(func(v interface{}) {
+				err := RunWithTimeout(func(v interface{}) {
 					time.Sleep(100 * time.Millisecond)
 				}, 200*time.Millisecond)
 				if err != nil {
