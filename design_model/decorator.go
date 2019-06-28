@@ -13,13 +13,11 @@ package design_model
 4. 优点:
 	可以通过一种动态的方式来扩展一个对象的功能，通过配置文件可以在运行时选择不同的装饰器，从而实现不同的行为。
  */
-type Component interface {
+type DecoratorComponent interface {
 	Cal(a, b int) int
 }
 
-type ConcreteComponent struct  {
-	
-}
+type ConcreteComponent struct  {}
 
 func (c *ConcreteComponent) Cal(a, b int) int {
 	return a + b
@@ -27,17 +25,17 @@ func (c *ConcreteComponent) Cal(a, b int) int {
 
 // 装饰对象--增加减运算
 type MulDecorate struct {
-	Component
+	DecoratorComponent
 	num int
 }
 
-func WrapMulDecorate(component Component, num int) Component {
+func WrapMulDecorate(component DecoratorComponent, num int) DecoratorComponent {
 	return &MulDecorate{
-		Component: component,
+		DecoratorComponent: component,
 		num: num,
 	}
 }
 
 func (m *MulDecorate) Cal(a, b int) int {
-	return m.Component.Cal(a, b) + m.num
+	return m.DecoratorComponent.Cal(a, b) + m.num
 }

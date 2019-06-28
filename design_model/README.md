@@ -16,7 +16,7 @@
 外观模式|facade
 适配器模式|adapter
 代理模式|proxy
-组合模式|
+组合模式|decorator
 装饰者模式|decorator
 桥接模式|bridge
 表驱动模式|table_driven
