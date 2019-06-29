@@ -1,47 +1,161 @@
-package tools
+package float
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
 func TestFloatOpFactory_CreateOpFactory(t *testing.T) {
-	addOperator := CreateOpFactory("+")
-	result := addOperator.Calc(12.12, 0.2)
-	if result != 12.32 {
-		t.Fatalf("shoule be 12.32, but get %f", result)
+	type checkFunc func(float64) error
+	testFunc := func(want float64) checkFunc {
+		return func(get float64) error {
+			if want != get {
+				return fmt.Errorf("wanted %f, but got %f", want, get)
+			}
+			return nil
+		}
 	}
 
-	result = addOperator.Calc(2.32, 0.222)
-	if result != 2.542 {
-		t.Fatalf("shoule be 2.542, but get %f", result)
+	tests := []struct {
+		name   string
+		opName string
+		a      float64
+		b      float64
+		check  checkFunc
+	}{
+		{
+			"add",
+			"+",
+			12.12,
+			0.2,
+			testFunc(12.32),
+		},
+		{
+			"add",
+			"+",
+			2.32,
+			0.222,
+			testFunc(2.542),
+		},
+		{
+			"sub",
+			"-",
+			2.3,
+			5.6,
+			testFunc(-3.3),
+		},
+		{
+			"sub",
+			"-",
+			2.33,
+			1.111,
+			testFunc(1.219),
+		},
+		{
+			"div",
+			"/",
+			4.2,
+			2.1,
+			testFunc(2),
+		},
+		{
+			"div",
+			"/",
+			5.0,
+			4.0,
+			testFunc(1.25),
+		},
+		{
+			"mul",
+			"*",
+			4.2,
+			2.1,
+			testFunc(8.82),
+		},
+		{
+			"mul",
+			"*",
+			1.9,
+			4.0,
+			testFunc(7.6),
+		},
 	}
 
-	subOperator := CreateOpFactory("-")
-	result = subOperator.Calc(2.3, 5.6)
-	if result != -3.3 {
-		t.Fatalf("shoule be 2.542, but get %f", result)
+	for _, ts := range tests {
+		t.Run(ts.name, func(t *testing.T) {
+			op := CreateOpFactory(ts.opName)
+			data := op.Calc(ts.a, ts.b)
+			if err := ts.check(data); err != nil {
+				t.Error(err)
+			}
+		})
 	}
-	result = subOperator.Calc(2.33, 1.111)
-	if result != 1.219 {
-		t.Fatalf("shoule be 1.219, but get %f", result)
+}
+
+func TestFloatOpFactory_MultiCalc(t *testing.T) {
+	type checkFunc func(float64) error
+
+	testFunc := func(want float64) checkFunc {
+		return func(get float64) error {
+			if get != want {
+				return fmt.Errorf("expected %f, founded %f", want, get)
+			}
+			return nil
+		}
+	}
+	tests := [...]struct {
+		name   string
+		params []interface{}
+		checks checkFunc
+	}{
+		{
+			"two add",
+			[]interface{}{0.3, "+", 0.4},
+			testFunc(0.7),
+		},
+		{
+			"two sub",
+			[]interface{}{0.3, "-", 0.4},
+			testFunc(-0.1),
+		},
+		{
+			"two mul",
+			[]interface{}{0.3, "*", 0.4},
+			testFunc(0.12),
+		},
+		{
+			"two div",
+			[]interface{}{0.3, "/", 0.4},
+			testFunc(0.75),
+		},
+		{
+			"three params",
+			[]interface{}{0.3, "+", 0.4, "-", 0.12},
+			testFunc(0.58),
+		},
+		{
+			"four params",
+			[]interface{}{0.3, "+", 0.4, "-", 0.2, "*", 0.6},
+			testFunc(0.3),
+		},
+		{
+			"five params",
+			[]interface{}{0.3, "+", 0.4, "-", 0.2, "*", 0.6, "/", 1.2},
+			testFunc(0.25),
+		},
+		{
+			"six params",
+			[]interface{}{0.3, "+", 0.4, "-", 0.2, "*", 0.6, "/", 1.2, "+", 3.5},
+			testFunc(3.75),
+		},
 	}
 
-	divOperator := CreateOpFactory("/")
-	result = divOperator.Calc(4.2, 2.1)
-	if result != 2 {
-		t.Fatalf("shoule be 2, but get %f", result)
+	for _, tc := range tests {
+		t.Run(fmt.Sprintf("Factor of %s", tc.name), func(t *testing.T) {
+			data := MultiCalc(tc.params...)
+			if err := tc.checks(data); err != nil {
+				t.Error(err)
+			}
+		})
 	}
-	result = divOperator.Calc(5.0, 4.0)
-	if result != 1.25 {
-		t.Fatalf("shoule be 1.25, but get %f", result)
-	}
-
-	mulOperator := CreateOpFactory("*")
-	result = mulOperator.Calc(4.2, 2.1)
-	if result != 8.82 {
-		t.Fatalf("shoule be 8.82, but get %f", result)
-	}
-	result = mulOperator.Calc(1.9, 4.0)
-	if result != 7.6 {
-		t.Fatalf("shoule be 7.6, but get %f", result)
-	}
-	t.Log("success")
 }
