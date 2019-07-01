@@ -28,7 +28,7 @@
 观察者模式|observer
 命令模式|command
 迭代器模式|iterator
-模板方法模式|template_method
+模板方法模式|template
 策略模式|strategy
 状态模式|state
 备忘录模式|memento
@@ -37,5 +37,5 @@
 访问者模式|visitor
 
 参考文章：  
-    https://books.studygolang.com/go-patterns/behavioral/observer.html
-    https://github.com/senghoo/golang-design-pattern
+    1. https://books.studygolang.com/go-patterns/behavioral/observer.html   
+    2. https://github.com/senghoo/golang-design-pattern
