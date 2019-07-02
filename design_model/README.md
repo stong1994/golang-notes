@@ -32,7 +32,6 @@
 策略模式|strategy
 状态模式|state
 备忘录模式|memento
-解释器模式|interpreter
 职责链模式|responsibility_chain
 访问者模式|visitor
 
