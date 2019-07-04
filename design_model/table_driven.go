@@ -1,8 +1,8 @@
 package design_model
 
 import (
-"fmt"
-"github.com/shopspring/decimal"
+	"fmt"
+	"github.com/shopspring/decimal"
 )
 /*
 表驱动模式
