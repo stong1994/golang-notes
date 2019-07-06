@@ -5,7 +5,7 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-// 直接计算(工厂模式胡里花哨)
+// 直接计算
 func Add(a, b float64) float64 {
 	val, _ := decimal.NewFromFloat(a).Add(decimal.NewFromFloat(b)).Float64()
 	return val
