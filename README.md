@@ -1,5 +1,6 @@
 # 记录golang相关知识
 
+- analyse: 性能分析(pprof)和跟踪剖析（trace）
 - arithmetic: 记录一些算法知识
 - design_model: 设计模式
 - fibonacci-solutions-golang: 斐波那契的几种实现方式
@@ -12,4 +13,5 @@
 - source_code_reading: 阅读源码
 - sync-practise: 阅读sync包，及应用
 - tools: 记录一些工具
-- translate_article: 翻译好的文章
+- translate_article: 翻译文章
+- other: 比较杂的内容
