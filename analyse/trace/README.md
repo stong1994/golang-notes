@@ -18,7 +18,7 @@ func main() {
 }
 
 ```
-启动程序后会生成文件`trace.out`，使用命令`go tool trace trace.out`即可打开UI界面。有9个子页面
+ 程序运行完才会产生`trace.out`文件，使用命令`go tool trace trace.out`即可打开UI界面。有9个子页面
 - View trace：查看跟踪
 - Goroutine analysis：Goroutine 分析
 - Network blocking profile：网络阻塞概况
