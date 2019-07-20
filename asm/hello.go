@@ -1,1 +1,3 @@
-package asm
+package main
+
+var id = 9527
