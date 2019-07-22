@@ -10,4 +10,4 @@
 9. [interface底层分析](https://www.jianshu.com/p/ce91ca87fef1?utm_campaign=haruki&utm_content=note&utm_medium=reader_share&utm_source=weixin)
 10. [channel](http://lessisbetter.site/2019/03/03/golang-channel-design-and-source/)
 11. [可扩展的网络库](https://github.com/8treenet/jaguar)
-
+12. [bilibili微服务框架](https://github.com/bilibili/kratos)

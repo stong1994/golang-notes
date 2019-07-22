@@ -244,3 +244,4 @@ Content-Type: text/html; charset=utf-8
 - [RESTful API 设计指南](http://www.ruanyifeng.com/blog/2014/05/restful_api.html)
 - [跨域资源共享 CORS 详解](http://www.ruanyifeng.com/blog/2016/04/cors.html)
 - [不要再问我跨域的问题了](https://segmentfault.com/a/1190000015597029)
+- [请求路由-压缩字典树](https://github.com/chai2010/advanced-go-programming-book/blob/master/ch5-web/ch5-02-router.md)
