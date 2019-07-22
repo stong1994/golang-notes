@@ -5,7 +5,7 @@
 2. [GO高级编程](https://chai2010.cn/advanced-go-programming-book/ch3-asm/ch3-01-basic.html)
 3. [官方教程](https://golang.org/doc/asm)
 
-#### 命令
+#### 知识点
 1. `DATA`  
     DATA命令用于初始化包变量，DATA命令的语法如下：
     ```
@@ -68,9 +68,249 @@
     DATA ·Name+8(SB)/8,$6
     DATA ·Name+16(SB)/8,$"gopher"
     ```
+    从上边对字符串和整数的表示中，我们可以看出，**汇编并没有这些具体的类型**，它只是通过不同的结构来表示这些类型。  
+    `GLOBL file_private<>(SB),$1`其中`<>`表示私有类型
     
+3. `textflag.h`
+    Go汇编语言还在`textflag.h`文件定义了一些标志。其中用于变量的标志有`DUPOK`、`RODATA`和`NOPTR`几个。
+    `DUPOK`表示该变量对应的标识符可能有多个，在链接时只选择其中一个即可（一般用于合并相同的常量字符串，减少重复数据占用的空间）  
+    `RODATA`标志表示将变量定义在**只读**内存段，因此后续任何对此变量的修改操作将导致异常（`recover`也**无法捕获**）  
+    `NOPTR`则表示此变量的内部`不含指针数据`，让垃圾回收器忽略对该变量的扫描。如果变量已经在Go代码中声明过的话，Go编译器会自动分析出该变量是否包含指针，这种时候可以不用手写NOPTR标志。  
+    代码：  
+    ```
+    #include "textflag.h"
+    
+    GLOBL ·const_id(SB),NOPTR|RODATA,$8
+    DATA  ·const_id+0(SB)/8,$9527
+    ```
+    该代码表示了一个int64类型的值为9527的整数，且该整数类型不包含指针数据且为只读。变量名为const_id
+    
+4. `TEXT`
+    函数标识符通过TEXT汇编指令定义，表示该行开始的指令定义在TEXT内存段。  
+    函数的名字后面是(SB)，表示是函数名符号相对于SB伪寄存器的偏移量，二者组合在一起最终是绝对地址。  
+    标志部分用于指示函数的一些特殊行为，标志在textlags.h文件中定义，常见的`NOSPLIT`主要用于指示叶子函数不进行栈分裂。  
+    framesize部分表示函数的局部变量需要多少栈空间，其中包含调用其它函数时准备调用参数的隐式栈空间。  
+    最后是可以省略的参数大小，之所以可以省略是因为编译器可以从Go语言的函数声明中推导出函数参数的大小。   
+    如用于交换数据的`Swap`函数:
+    ```go
+    package main
+    
+    //go:nosplit
+    func Swap(a, b int) (int, int)
+    ```
+    zaIn汇编中有两种表示：
+    ```
+    // func Swap(a, b int) (int, int)
+    TEXT ·Swap(SB), NOSPLIT, $0-32
+    
+    // func Swap(a, b int) (int, int)
+    TEXT ·Swap(SB), NOSPLIT, $0
+    ``` 
+    其中`32`表示**参数**和**返回值**的`4`个`int`类型.  
+    目前可能遇到的函数标志有`NOSPLIT`、`WRAPPER`和`NEEDCTXT`几个  
+    `NOSPLIT`不会生成或包含栈分裂代码，这一般用于没有**任何其它函数调用**的叶子函数，这样可以适当提高性能。  
+    `WRAPPER`标志则表示这个是一个包装函数，在`panic`或`runtime.caller`等某些处理函数帧的地方**不会增加函数帧计数**。  
+    `NEEDCTXT`表示**需要一个上下文参数**，一般用于**闭包函数**。  
+    需要注意的是函数也没有类型，上面定义的Swap函数签名可以下面任意一种格式:
+    ```go
+    func Swap(a, b, c int) int
+    func Swap(a, b, c, d int)
+    func Swap() (a, b, c, d int)
+    func Swap() (a []int, d int)
+    ```      
+    下面的代码演示了如何在汇编函数中使用参数和返回值：   
+    GO中的函数：`func Swap(a, b int) (ret0, ret1 int)`  
+    汇编：
+    ```
+    TEXT ·Swap(SB), $0
+        MOVQ a+0(FP), AX     // AX = a
+        MOVQ b+8(FP), BX     // BX = b
+        MOVQ BX, ret0+16(FP) // ret0 = BX
+        MOVQ AX, ret1+24(FP) // ret1 = AX
+        RET
+    ```
+    **复杂的参数和返回值的内存布局**  
+    ```go
+    func Foo(a bool, b int16) (c []byte)
+    ```
+    ```
+    TEXT ·Foo(SB), $0
+        MOVEQ a+0(FP),       AX // a
+        MOVEQ b+2(FP),       BX // b
+        MOVEQ c_dat+8*1(FP), CX // c.Data
+        MOVEQ c_len+8*2(FP), DX // c.Len
+        MOVEQ c_cap+8*3(FP), DI // c.Cap
+        RET
+    ```
+    b和a之间空出一个字节，b和c之间空出4个字节。空出的原因是保证每个参数变量地址都要对其到相应的倍数。  
+    为了便于访问**局部变量**，Go汇编语言引入了`伪SP`寄存器，对应**当前栈帧的底部**。    
+    GO中的函数：
+    ```go
+    func Foo() {
+        var c []byte
+        var b int16
+        var a bool
+    }
+    ```
+    对应的汇编代码：
+    ```
+    TEXT ·Foo(SB), $32-0
+        MOVQ a-32(SP),      AX // a
+        MOVQ b-30(SP),      BX // b
+        MOVQ c_data-24(SP), CX // c.Data
+        MOVQ c_len-16(SP),  DX // c.Len
+        MOVQ c_cap-8(SP),   DI // c.Cap
+        RET
+    ```
+    可以计算出该函数的栈帧大小为32个字节（注意内存对齐所需要的空位）。  
+    出现最后定义的`a`离伪`SP寄存器`**最近**的原因是：
+    从Go语言函数角度理解，**先定义**的`c`变量地址要比**后定义**的变量的地址**更小**；另一个是伪SP寄存器对应栈帧的底部，而`X86`中`栈`是**从高向地生长**的，所以最先定义有着更小地址的c变量离栈的底部伪SP更远。  
+    伪SP寄存器对应高地址，因此对应的局部变量的偏移量都是负数。  
+    
+    **汇编函数的参数是从哪里来的？**  
+    被调用函数的参数是由调用方准备的：调用方在栈上设置好空间和数据后调用函数，被调用方在返回前将返回值放在对应的位置，函数通过`RET`指令返回调用方函数之后，调用方再从返回值对应的栈内存位置取出结果。
+    Go语言函数的调用参数和返回值均是通过栈传输的，这样做的优点是函数调用栈比较清晰，缺点是函数调用有一定的性能损耗（Go编译器是通过**函数内联**来缓解这个问题的影响）。  
+    
+    GO代码：
+    ```go
+    func main() {
+        printsum(1, 2)
+    }
+    
+    func printsum(a, b int) {
+        var ret = sum(a, b)
+        println(ret)
+    }
+    
+    func sum(a, b int) int {
+        return a+b
+    }
 
+    ```
+    偷张图片。。。
+    ![](https://chai2010.cn/advanced-go-programming-book/images/ch3-12-func-call-frame-01.ditaa.png)
 
+4. 控制流
+    GO代码：
+    ```go
+    func main() {
+        var a = 10
+        println(a)
+    
+        var b = (a+a)*a
+        println(b)
+    }
+    ```
+    修改为伪汇编：
+    ```go
+    func main() {
+        var a, b int
+    
+        a = 10
+        runtime.printint(a)
+        runtime.printnl()
+    
+        b = a
+        b += b
+        b *= a
+        runtime.printint(b)
+        runtime.printnl()
+    }
+    ```
+    汇编代码：
+    ```
+    TEXT ·main(SB), $24-0
+        MOVQ $0, a-8*2(SP) // a = 0
+        MOVQ $0, b-8*1(SP) // b = 0
+    
+        // 将新的值写入a对应内存
+        MOVQ $10, AX       // AX = 10
+        MOVQ AX, a-8*2(SP) // a = AX
+    
+        // 以a为参数调用函数
+        MOVQ AX, 0(SP)
+        CALL runtime·printint(SB)
+        CALL runtime·printnl(SB)
+    
+        // 函数调用后, AX/BX 寄存器可能被污染, 需要重新加载
+        MOVQ a-8*2(SP), AX // AX = a
+        MOVQ b-8*1(SP), BX // BX = b
+    
+        // 计算b值, 并写入内存
+        MOVQ AX, BX        // BX = AX  // b = a
+        ADDQ BX, BX        // BX += BX // b += a
+        IMULQ AX, BX       // BX *= AX // b *= a
+        MOVQ BX, b-8*1(SP) // b = BX
+    
+        // 以b为参数调用函数
+        MOVQ BX, 0(SP)
+        CALL runtime·printint(SB)
+        CALL runtime·printnl(SB)
+    
+        RET
+    ```
+    for循环代码：
+    ```go
+    func LoopAdd(cnt, v0, step int) int {
+        result := v0
+        for i := 0; i < cnt; i++ {
+            result += step
+        }
+        return result
+    }
+    ```
+    转换成为汇编代码
+    ```go
+    func LoopAdd(cnt, v0, step int) int {
+        var i = 0
+        var result = 0
+    
+    LOOP_BEGIN:
+        result = v0
+    
+    LOOP_IF:
+        if i < cnt { goto LOOP_BODY }
+        goto LOOP_END
+    
+    LOOP_BODY
+        i = i+1
+        result = result + step
+        goto LOOP_IF
+    
+    LOOP_END:
+    
+        return result
+    }
+    ```
+    汇编代码：
+    ```
+    #include "textflag.h"
+    
+    // func LoopAdd(cnt, v0, step int) int
+    TEXT ·LoopAdd(SB), NOSPLIT,  $0-32
+        MOVQ cnt+0(FP), AX   // cnt
+        MOVQ v0+8(FP), BX    // v0/result
+        MOVQ step+16(FP), CX // step
+    
+    LOOP_BEGIN:
+        MOVQ $0, DX          // i
+    
+    LOOP_IF:
+        CMPQ DX, AX          // compare i, cnt
+        JL   LOOP_BODY       // if i < cnt: goto LOOP_BODY
+        JMP LOOP_END
+    
+    LOOP_BODY:
+        ADDQ $1, DX          // i++
+        ADDQ CX, BX          // result += step
+        JMP LOOP_IF
+    
+    LOOP_END:
+    
+        MOVQ BX, ret+24(FP)  // return result
+        RET
+    ```
+    
 #### 其他
 Go汇编为了简化汇编代码的编写，引入了PC、FP、SP、SB四个伪寄存器
 
