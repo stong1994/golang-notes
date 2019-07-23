@@ -190,7 +190,7 @@
     偷张图片。。。
     ![](https://chai2010.cn/advanced-go-programming-book/images/ch3-12-func-call-frame-01.ditaa.png)
 
-4. 控制流
+5. 控制流
     GO代码：
     ```go
     func main() {
@@ -310,14 +310,181 @@
         MOVQ BX, ret+24(FP)  // return result
         RET
     ```
+6. 函数分析  
+    先构造一个禁止栈分裂的printnl函数。printnl函数内部都通过调用runtime.printnl函数输出换行：  
+    ```
+    TEXT ·printnl_nosplit(SB), NOSPLIT, $8
+        CALL runtime·printnl(SB)
+        RET
+    ```
+    通过命令`go tool asm -S main_amd64.s`查看编译后的源码:
+    ```
+    "".printnl_nosplit STEXT nosplit size=29 args=0xffffffff80000000 locals=0x10
+    0x0000 00000 (main_amd64.s:5) TEXT "".printnl_nosplit(SB), NOSPLIT    $16
+    0x0000 00000 (main_amd64.s:5) SUBQ $16, SP
+    
+    0x0004 00004 (main_amd64.s:5) MOVQ BP, 8(SP)
+    0x0009 00009 (main_amd64.s:5) LEAQ 8(SP), BP
+    
+    0x000e 00014 (main_amd64.s:6) CALL runtime.printnl(SB)
+    
+    0x0013 00019 (main_amd64.s:7) MOVQ 8(SP), BP
+    0x0018 00024 (main_amd64.s:7) ADDQ $16, SP
+    0x001c 00028 (main_amd64.s:7) RET
+    ```
+    加上缩进：
+    ```
+    TEXT "".printnl(SB), NOSPLIT, $16
+        SUBQ $16, SP
+            MOVQ BP, 8(SP)
+            LEAQ 8(SP), BP
+                CALL runtime.printnl(SB)
+            MOVQ 8(SP), BP
+        ADDQ $16, SP
+    RET
+    ```
+    - 第一层`TEXT`表示指令开始，`RET`表示结束
+    - 第二层`SUBQ`给`SP`分配了16个字节的空间，`ADDQ`收回这16个字节（发现多分配了8字节）
+    - 第三层`MOVQ`将`BP`寄存器保存到了多分配的8字节中，`LEAQ`将`8(SP)`的地址再保存到BP中，最后`MOVQ`恢复之前备份的前`BP`寄存器中的值  
+    
+    去掉NOSPLIT
+    ```
+    TEXT "".printnl_nosplit(SB), $16
+    L_BEGIN:
+        MOVQ (TLS), CX
+        CMPQ SP, 16(CX)
+        JLS  L_MORE_STK
+    
+            SUBQ $16, SP
+                MOVQ BP, 8(SP)
+                LEAQ 8(SP), BP
+                    CALL runtime.printnl(SB)
+                MOVQ 8(SP), BP
+            ADDQ $16, SP
+    
+    L_MORE_STK:
+        CALL runtime.morestack_noctxt(SB)
+        JMP  L_BEGIN
+    RET
+    ```
+    发现增加了一些内容(**扩容**)：  
+    `MOVQ (TLS), CX`用于加载`g`结构体指针  
+    `CMPQ SP, 16(CX)` `SP`栈指针和`g`结构体中`stackguard0`成员比较，如果比较的结果小于0则跳转到结尾的`L_MORE_STK`部分  
+    当获取到更多栈空间之后，通过`JMP L_BEGIN`指令跳转到函数的开始位置重新进行栈空间的检测。  
+    > 在g结构体中的`stackguard0`成员是出现爆栈前的警戒线。`stackguard0`的偏移量是16个字节，因此上述代码中的`CMPQ SP, 16(AX)`表示将当前的真实`SP`和爆栈警戒线比较，如果超出警戒线则表示需要进行`栈扩容`，也就是跳转到`L_MORE_STK`。
+    在`L_MORE_STK`标号处，先调用`runtime·morestack_noctxt`进行栈扩容，然后又跳回到函数的开始位置，此时此刻函数的栈已经调整了。然后再进行一次栈大小的检测，如果依然不足则继续扩容，直到栈足够大为止。
+    
+7. 方法函数
+    GO代码：
+    ```go
+    package main
+    
+    type MyInt int
+    
+    func (v MyInt) Twice() int {
+        return int(v)*2
+    }
+    
+    func MyInt_Twice(v MyInt) int {
+        return int(v)*2
+    }
+    ```
+    汇编
+    ```
+    // func (v MyInt) Twice() int
+    TEXT ·MyInt·Twice(SB), NOSPLIT, $0-16
+        MOVQ a+0(FP), AX   // v
+        ADDQ AX, AX        // AX *= 2
+        MOVQ AX, ret+8(FP) // return v
+        RET
+    ```
+8. 闭包
+    GO代码
+    ```go
+    package main
+    
+    func NewTwiceFunClosure(x int) func() int {
+        return func() int {
+            x *= 2
+            return x
+        }
+    }
+    
+    func main() {
+        fnTwice := NewTwiceFunClosure(1)
+    
+        println(fnTwice()) // 1*2 => 2
+        println(fnTwice()) // 2*2 => 4
+        println(fnTwice()) // 4*2 => 8
+    }
+    ```
+    手动构造闭包函数,`F`表示闭包函数的函数指令的地址，`X`表示闭包捕获的外部变量
+    ```go
+    type FunTwiceClosure struct {
+        F uintptr
+        X int
+    }
+    
+    func NewTwiceFunClosure(x int) func() int {
+        var p = &FunTwiceClosure{
+            F: asmFunTwiceClosureAddr(),
+            X: x,
+        }
+        return ptrToFunc(unsafe.Pointer(p))
+    }
+    ```
+    汇编语言实现了以下三个辅助函数
+    ```go
+    func ptrToFunc(p unsafe.Pointer) func() int
+    func asmFunTwiceClosureAddr() uintptr
+    func asmFunTwiceClosureBody() int
+    ```
+    - `asmFunTwiceClosureAddr`用于获取闭包函数的函数指令的地址
+    - `ptrToFunc`将结构体指针转为闭包函数对象
+    - `asmFunTwiceClosureBody`是闭包函数对应的全局函数的实现
+    用汇编实现以上三个辅助函数
+    ```
+    #include "textflag.h"
+    
+    TEXT ·ptrToFunc(SB), NOSPLIT, $0-16
+        MOVQ ptr+0(FP), AX // AX = ptr
+        MOVQ AX, ret+8(FP) // return AX
+        RET
+    
+    TEXT ·asmFunTwiceClosureAddr(SB), NOSPLIT, $0-8
+        LEAQ ·asmFunTwiceClosureBody(SB), AX // AX = ·asmFunTwiceClosureBody(SB)
+        MOVQ AX, ret+0(FP)                   // return AX
+        RET
+    
+    TEXT ·asmFunTwiceClosureBody(SB), NOSPLIT|NEEDCTXT, $0-8
+        MOVQ 8(DX), AX
+        ADDQ AX   , AX        // AX *= 2
+        MOVQ AX   , 8(DX)     // ctx.X = AX
+        MOVQ AX   , ret+0(FP) // return AX
+        RET
+    ```
+    `NEEDCTXT`标志定义的汇编函数表示需要一个上下文环境，在AMD64环境下是通过`DX`寄存器来传递这个上下文环境指针，也就是对应`FunTwiceClosure`结构体的指针。  
+    > 函数首先从`FunTwiceClosure`结构体对象取出之前捕获的`X`，将`X`乘以2之后写回内存，最后返回修改之后的`X`的值。  
+    
+    整个闭包的流程：
+    > 1. 构建闭包对象，成员分别为闭包函数的指令地址和闭包函数的外部变量
+    > 2. 调用闭包函数时，先拿到闭包对象，根据闭包函数的指令地址调用`CALL`来运行闭包函数，然后更新闭包对象中的外部变量。  
+    
+    闭包函数就是获取外层局部作用域的局部对象，于是闭包函数本身就有了状态，从这个角度讲，全局函数也是闭包函数，只是没有调用外层变量。
     
 #### 其他
 Go汇编为了简化汇编代码的编写，引入了PC、FP、SP、SB四个伪寄存器
 
 在AMD64环境，`伪PC寄存器`其实是`IP指令计数器寄存器`的别名。  
+`SB`: 全局静态基指针，一般用来声明函数或全局变量。
 `伪FP寄存器`对应的是函数的`帧指针`，一般用来访问函数的`参数`和`返回值`。  
 `伪SP栈指针`对应的是当前`函数栈帧`的`底部`（不包括参数和返回值部分），一般用于`定位局部变量`。伪SP是一个比较特殊的寄存器，因为还存在一个同名的SP真寄存器。  
 `真SP寄存器`对应的是`栈`的`顶部`，一般用于定位调用`其它函数`的`参数`和`返回值`。  
 当需要区分伪寄存器和真寄存器的时候只需要记住一点：`伪寄存器`一般需要一个`标识符`和`偏移量`为前缀，如果没有标识符前缀则是真寄存器。比如(SP)、+8(SP)没有标识符前缀为真SP寄存器，而a(SP)、b+8(SP)有标识符为前缀表示伪寄存器。
 
 `SRODATA`标志表示这个数据在只读内存段，`dupok`表示出现多个相同标识符的数据时只保留一个就可以了
+
+
+在add目录下做了一个简单的加法汇编，有几点感到很疑惑：
+1. 可以用测试函数来调用Add方法，用main不可以
+2. 汇编代码要在最后留一个空行。
