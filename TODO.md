@@ -9,5 +9,9 @@
 8. [go汇编](https://chai2010.cn/advanced-go-programming-book/ch3-asm/ch3-01-basic.html) 
 9. [interface底层分析](https://www.jianshu.com/p/ce91ca87fef1?utm_campaign=haruki&utm_content=note&utm_medium=reader_share&utm_source=weixin)
 10. [channel](http://lessisbetter.site/2019/03/03/golang-channel-design-and-source/)
+11. [channel+1](https://mp.weixin.qq.com/s?__biz=MjM5MDUwNTQwMQ==&mid=2257483870&idx=1&sn=1c61a1f530b3e52d801a7916065f3eec&chksm=a5391888924e919e39ddb8f017b572fd6f199184d6ad85c4ae4dacf2749312b70717d7beee44&mpshare=1&scene=1&srcid=&key=034516426b2066d0f70d525bf66160c508cad2ca843ffddfa4ee6bd2edc545645b98d4bb5ce66bab8cfa81546462f00c8fe47c5e797a7ccbedf92eeb800ec864b921273b277153f1b88730e5d884ce91&ascene=1&uin=MjEwMjA3MTA2NQ%3D%3D&devicetype=Windows+10&version=62060834&lang=zh_CN&pass_ticket=efPNLRctgYmpKMszLe6OEG5z5f8en%2BzyyWAgphiEkVcPy2arsWBGjQPgMH5xDDSU)
 11. [可扩展的网络库](https://github.com/8treenet/jaguar)
 12. [bilibili微服务框架](https://github.com/bilibili/kratos)
+13. [指令重排](https://mp.weixin.qq.com/s?__biz=MjM5MDUwNTQwMQ==&mid=2257483799&idx=1&sn=8922b65080f15d5e3fa006da20cc6901&chksm=a53918c1924e91d7f5e450e537ba3c5050724cc47d1b8d5ac7af3248338bd348d964b14f9f75&mpshare=1&scene=1&srcid=&key=49cd1e59990c3d1f8cca724eb112954847fff27e8bc8904c27292644d77747263d3cc9702902edb417d79d823080f5a71b2f860b74ba7eceb4adcbec2fa07fdbf6bd713c65246d121775d84b25c9317a&ascene=1&uin=MjEwMjA3MTA2NQ%3D%3D&devicetype=Windows+10&version=62060834&lang=zh_CN&pass_ticket=p1PfS0o9cRjtbB%2BynPAdCHbSMZOC%2BU4lwTdkfawvdMDEHZIHLxE4S4T8nH0JsDLX)
+14. 内存对齐
+15. 堆栈逃逸分析
