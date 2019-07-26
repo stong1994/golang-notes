@@ -7,4 +7,22 @@
 
 > crypto.rand为真随机数
 
-经过性能测试，crypto.math生成随机数的速度竟然比math.rand生成随机数的速度快，但是要消耗的内存更多。
+通过`benchcmp`来进行比较性能
+
+生成过程：
+1. `RandNum`函数中调用`MathRandNum`函数，然后执行命令`go test -bench="BenchmarkRandNum"  > math`
+2. `RandNum`函数中调用`CryptoRandNum`函数，然后执行命令`go test -bench="BenchmarkRandNum"  > crypto`
+3. 通过生成的基准测试文件进行比较，执行命令`benchcmp math crypto`
+
+```
+benchmark               old ns/op     new ns/op     delta
+BenchmarkRandNum-16     17244         1179          -93.16%
+
+benchmark               old allocs     new allocs     delta
+BenchmarkRandNum-16     0              4              +Inf%
+
+benchmark               old bytes     new bytes     delta
+BenchmarkRandNum-16     0             56            +Inf%
+
+```
+其中`old`为`math`，`new`为`crypto`，可以看出，生成真随机数的时间要比伪随机数的时间快很多，竟然为93%。但是真随机数需要更多的内存分配。

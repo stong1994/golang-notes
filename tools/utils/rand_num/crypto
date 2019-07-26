@@ -1,0 +1,6 @@
+goos: windows
+goarch: amd64
+pkg: golang-learning/tools/utils/rand_num
+BenchmarkRandNum-16    	 1000000	      1179 ns/op	      56 B/op	       4 allocs/op
+PASS
+ok  	golang-learning/tools/utils/rand_num	2.093s
