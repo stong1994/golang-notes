@@ -15,3 +15,4 @@
 13. [指令重排](https://mp.weixin.qq.com/s?__biz=MjM5MDUwNTQwMQ==&mid=2257483799&idx=1&sn=8922b65080f15d5e3fa006da20cc6901&chksm=a53918c1924e91d7f5e450e537ba3c5050724cc47d1b8d5ac7af3248338bd348d964b14f9f75&mpshare=1&scene=1&srcid=&key=49cd1e59990c3d1f8cca724eb112954847fff27e8bc8904c27292644d77747263d3cc9702902edb417d79d823080f5a71b2f860b74ba7eceb4adcbec2fa07fdbf6bd713c65246d121775d84b25c9317a&ascene=1&uin=MjEwMjA3MTA2NQ%3D%3D&devicetype=Windows+10&version=62060834&lang=zh_CN&pass_ticket=p1PfS0o9cRjtbB%2BynPAdCHbSMZOC%2BU4lwTdkfawvdMDEHZIHLxE4S4T8nH0JsDLX)
 14. 内存对齐
 15. 堆栈逃逸分析
+16. http router压缩字典树 https://cch123.github.io/httprouter/ 以及restful的好处
