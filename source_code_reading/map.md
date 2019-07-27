@@ -554,7 +554,7 @@ func evacuate(t *maptype, h *hmap, oldbucket uintptr) {
 		x.b = (*bmap)(add(h.buckets, oldbucket*uintptr(t.bucketsize)))
 		x.k = add(unsafe.Pointer(x.b), dataOffset)
 		x.v = add(x.k, bucketCnt*uintptr(t.keysize))
-        // 如果map扩容，长度扩大为1倍（不是因为溢出桶太多导致的扩容），就把旧桶直接给y
+        // 如果map扩容，长度扩大为1倍（不是因为溢出桶太多导致的扩容），就把新桶直接给y
 		if !h.sameSizeGrow() {
 			// Only calculate y pointers if we're growing bigger.
 			// Otherwise GC can see bad pointers.
@@ -675,3 +675,9 @@ func evacuate(t *maptype, h *hmap, oldbucket uintptr) {
         ```
         所以bucket就是对桶的定位，那么oldbucket就是对旧桶的定位。只针对一个桶？？？
 - 获取旧桶的实体，通过状态判断该桶是否扩充完
+    - 如果没扩充完
+        - 创建xy来存新桶和旧桶，先把旧桶存入x
+        - 如果该扩容不是由于溢出桶太多引起的，也就是由元素数量太多引起的，直接扩容为之前的2倍，那么就直接分配对应地址（新桶的地址）给y
+        - 遍历之前的桶和它的溢出桶
+            - 遍历桶中的cell
+                - 如果key是指针类型，那么就获取其值
