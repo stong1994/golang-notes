@@ -78,7 +78,7 @@ type hmap struct {
 	extra *mapextra // optional fields
 }
 ```
-一共有几个属性（`slice`才三个。。。），先重点记住这几个
+一共有九个属性（`slice`才三个。。。），先重点记住这几个
 - hash0: hash种子
 - count： map的大小
 - flags: map的状态
@@ -539,10 +539,11 @@ func growWork(t *maptype, h *hmap, bucket uintptr) {
 }
 ```
 
+// runtime/map.go:1136
 ```go
 func evacuate(t *maptype, h *hmap, oldbucket uintptr) {
 	b := (*bmap)(add(h.oldbuckets, oldbucket*uintptr(t.bucketsize))) // 获取oldbucket
-	newbit := h.noldbuckets() // 获取扩容前的桶的数量
+	newbit := h.noldbuckets() // 1向左移旧桶的B个位数，即扩容前的桶的最大数量
 	if !evacuated(b) {  // 判断bucket是否扩容完，根据状态判断
 		// TODO: reuse overflow buckets instead of using new ones, if there
 		// is no iterator using the old buckets.  (If !oldIterator.)
@@ -681,3 +682,28 @@ func evacuate(t *maptype, h *hmap, oldbucket uintptr) {
         - 遍历之前的桶和它的溢出桶
             - 遍历桶中的cell
                 - 如果key是指针类型，那么就获取其值
+                - 如果该扩容是由于元素数量太多引起的，那么计算key的哈希，判断放在旧桶还是新桶
+                - 如果该桶已经放满了8个cell，那么就新建一个溢出桶存放数据。
+                - 复制值和value到桶中
+
+
+#### 总结
+1. map的结构体hmap有9个属性，比较重要的几个为：元素个数、map状态标志、buckets的对数、溢出桶的近似数、哈希值（用来计算key的哈希），指向buckets数组的地址
+2. 一个bucket中最多有8个cell，通过key的hash值得低B位来决定存储哪个桶。（B为桶的个数的对数）
+3. bucket的结构体为bmap,有5个属性：8个cell的tophash组成数组，8个key组成的数组、8个值组成的数组、溢出桶的地址（将key放一起，value放一起，通过内存对齐可以节省内存空间）
+
+    ![](https://mmbiz.qpic.cn/mmbiz_png/ASQrEXvmx61pib1iaeK6CYYicjtlSl0HrycEvYofWxQWP0fnXSqqfwRFKt8HSJ7HP2qic0mqfEv9w82B0Qvpg1OJNg/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1&wx_co=1)
+4. key的哈希的高8位决定key存入哪个cell，即tophash。当桶已满，创建一个溢出桶来存放数据。
+    如果一个key的哈希是：`10010111|000011110110110010001111001010100010010110010101010│01010`，并且B为5，那么哈希的后5位为10，前8位为151，那么就会存入第10个桶，设置tophash为151，方便查找。（由于可能存在tophash重复的情况，因此查找时先判读tophash，再判断key的值）
+5. 触发map扩容，有两种情况
+    - 桶中的元素过多：桶中的已占用的cell的平均值超过过载因子，源码中为6.5
+    - 溢出桶过多：大概为溢出桶的数量超过非溢出桶的数量
+6. map遍历随机原因：
+    - map添加时需要按照key的哈希的后B位和前8位来确定其位置，并且扩容时还会更改位置。
+    - 获取key的value时，会随机选择一个桶作为起始点遍历所有的桶，因此map的遍历是随机的。
+7. go中，通过哈希查找表实现map，用链表法解决哈希冲突。
+8. 扩容的过程是渐进的，防止一次性搬迁的key过多，引发性能问题。触发扩容的时机是添加新元素，bucket搬迁的时机则发生在赋值、删除期间，每次最多搬迁两个bucket
+
+#### 参考文章
+- [深度解密Go语言之map-码农桃花源](https://mp.weixin.qq.com/s/2CDpE5wfoiNXm1agMAq4wA)
+- [如何实现随机取一个map的key](https://lukechampine.com/hackmap.html)
