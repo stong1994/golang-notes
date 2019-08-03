@@ -525,7 +525,7 @@ func makeBucketArray(t *maptype, b uint8, dirtyalloc unsafe.Pointer) (buckets un
 }
 ```    
 
-- `buckets`迁移代码
+- `buckets`迁移代码,每次最多迁移两个桶，防止一次性迁移过多导致的性能问题
 ```go
 func growWork(t *maptype, h *hmap, bucket uintptr) {
 	// make sure we evacuate the oldbucket corresponding
@@ -698,7 +698,7 @@ func evacuate(t *maptype, h *hmap, oldbucket uintptr) {
 5. 触发map扩容，有两种情况
     - 桶中的元素过多：桶中的已占用的cell的平均值超过过载因子，源码中为6.5
     - 溢出桶过多：大概为溢出桶的数量超过非溢出桶的数量
-6. map遍历随机原因：
+6. map遍历随机原因（类比为空的房子太多，需要减少房子，和人太多，需要按种类分类）：
     - map添加时需要按照key的哈希的后B位和前8位来确定其位置，并且扩容时还会更改位置。
     - 获取key的value时，会随机选择一个桶作为起始点遍历所有的桶，因此map的遍历是随机的。
 7. go中，通过哈希查找表实现map，用链表法解决哈希冲突。
