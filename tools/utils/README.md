@@ -6,3 +6,4 @@
 - visit_rate_limit: 对ip访问进行限制
 - float_operate: 工厂模式实现浮点运算
 - join_string: 比较集中字符串拼接的效率
+- command_with_api: 用api来访问linux服务器并进行操作
