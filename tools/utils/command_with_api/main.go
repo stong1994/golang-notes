@@ -116,7 +116,7 @@ func Exec(c string) ([]byte, error) {
 		}
 
 	}
-	cmd.Wait() // TODO 这里不调用会不会有资源泄露的问题
+	cmd.Wait() // TODO 这里不调用会不会有资源泄露的问题， 代码中没有说会有资源泄露问题，只是等待执行完毕
 end:
 
 	if len(data) == 0 {
