@@ -685,6 +685,123 @@ func evacuate(t *maptype, h *hmap, oldbucket uintptr) {
                 - 如果该扩容是由于元素数量太多引起的，那么计算key的哈希，判断放在旧桶还是新桶
                 - 如果该桶已经放满了8个cell，那么就新建一个溢出桶存放数据。
                 - 复制值和value到桶中
+#### 删除元素
+增加代码
+```go
+var m = map[int]struct{}{1: struct{}{}}
+
+func del()  {
+	delete(m, 1)
+}
+
+```
+编译后,得到关键代码:`CALL    runtime.mapdelete_fast64(SB)`  
+这样我们就找到了源码入口. 即`runtime`下的`mapdelete_fast64`函数.  
+
+`runtime/map_fast64.go:272`
+```go
+func mapdelete_fast64(t *maptype, h *hmap, key uint64) {
+	if raceenabled && h != nil {
+		callerpc := getcallerpc()
+		racewritepc(unsafe.Pointer(h), callerpc, funcPC(mapdelete_fast64))
+	}
+	// 判断是否为空map
+	if h == nil || h.count == 0 {
+		return
+	}
+	// 判断该map是否处于写状态
+	if h.flags&hashWriting != 0 {
+		throw("concurrent map writes")
+	}
+	
+    // 计算key的哈希
+	hash := t.key.alg.hash(noescape(unsafe.Pointer(&key)), uintptr(h.hash0))
+
+	// 设置状态
+	// Set hashWriting after calling alg.hash for consistency with mapdelete
+	h.flags ^= hashWriting
+
+	// 获取key所在的桶的位置,如果map处在扩容状态,对两个桶进行扩容
+	bucket := hash & bucketMask(h.B)
+	if h.growing() {
+		growWork_fast64(t, h, bucket)
+	}
+	// 获取key所在的桶
+	b := (*bmap)(add(h.buckets, bucket*uintptr(t.bucketsize)))
+	bOrig := b
+search:
+	// 遍历该桶及其溢出桶
+	for ; b != nil; b = b.overflow(t) {
+		// 遍历桶中的key,因为是uint64,因此每个key占8个字节,所以每次加8
+		for i, k := uintptr(0), b.keys(); i < bucketCnt; i, k = i+1, add(k, 8) {
+			if key != *(*uint64)(k) || isEmpty(b.tophash[i]) {
+				continue
+			}
+			// 如果key为指针,则清空
+			// Only clear key if there are pointers in it.
+			if t.key.kind&kindNoPointers == 0 {
+				memclrHasPointers(k, t.key.size)
+			}
+			// 桶的地址 + key开始的地址偏移量 + key占用的大小 + 当前key的索引(即value的索引值)*每个值的占得大小 = key对应的value的地址
+			v := add(unsafe.Pointer(b), dataOffset+bucketCnt*8+i*uintptr(t.valuesize))
+			// 如果value为指针,则清空
+			if t.elem.kind&kindNoPointers == 0 {
+				memclrHasPointers(v, t.elem.size)
+			} else {
+				memclrNoHeapPointers(v, t.elem.size)
+			}
+			// 重置ceil的tophah
+			b.tophash[i] = emptyOne
+			// If the bucket now ends in a bunch of emptyOne states,
+			// change those to emptyRest states.
+			// 如果这是桶中最后一个元素,但是其溢出桶中还有元素,那么直接将map的元素的数量减一并退出循环
+			if i == bucketCnt-1 {
+				if b.overflow(t) != nil && b.overflow(t).tophash[0] != emptyRest {
+					goto notLast
+				}
+			} else {
+				// 如果这不是桶中的最后一个元素,且该元素的高位元素不为空,那么直接将map的数量减一并退出循环
+				if b.tophash[i+1] != emptyRest {
+					goto notLast
+				}
+			}
+			
+			for {
+			    // 标记当前ceil以及其高位ceil都为空
+				b.tophash[i] = emptyRest
+				if i == 0 {
+				    // 如果是key定位到的桶,退出当前循环
+					if b == bOrig {
+						break // beginning of initial bucket, we're done.
+					}
+					// 获取到该链表桶中的最后一个溢出桶
+					// Find previous bucket, continue at its last entry.
+					c := b
+					for b = bOrig; b.overflow(t) != c; b = b.overflow(t) {
+					}
+					i = bucketCnt - 1
+				} else {
+					i--
+				}
+				// 如果当前ceil不为空,则退出当前循环
+				if b.tophash[i] != emptyOne {
+					break
+				}
+			}
+		notLast:
+			h.count--
+			break search
+		}
+	}
+
+	// 再次检查状态:状态被改变了,说明该map被其他操作进行了更改
+	if h.flags&hashWriting == 0 {
+		throw("concurrent map writes")
+	}
+	// 更新状态
+	h.flags &^= hashWriting
+}
+```
 
 
 #### 总结
