@@ -765,12 +765,14 @@ search:
 					goto notLast
 				}
 			}
+			// 上面if else表达的意思是查看该元素后是否还有元素，如果有的话，直接将map的数量减一。如果没有的话，需要做emptyRest标记，即下边的操作
 			
+			// 下边的for循环表达的是，将当前的ceil所在桶的最后一个溢出桶，往低位ceil遍历（因为已知高位ceil为空），如果ceil为空，则标记为emptyRest，碰到不为空的，终止循环
 			for {
-			    // 标记当前ceil以及其高位ceil都为空
+			    // 标记当前ceil以及其高位ceil都为空。在该for循环的最后一行，判断了当前ceil为空，因此设置为 emptyRest(当前ceil及高位ceil都为空)
 				b.tophash[i] = emptyRest
 				if i == 0 {
-				    // 如果是key定位到的桶,退出当前循环
+				    // 如果是key定位到的桶,即key没有在溢出桶，退出当前循环
 					if b == bOrig {
 						break // beginning of initial bucket, we're done.
 					}
@@ -802,6 +804,22 @@ search:
 	h.flags &^= hashWriting
 }
 ```
+#### 更新元素
+增加代码
+```go
+func update() {
+	var simpleMap = map[string]int{"a": 1}
+	simpleMap["a"] = 2
+}
+```
+编译后查看结果
+```
+0x00a7 00167 (update_map.go:4)  CALL    runtime.mapassign_faststr(SB)
+0x00e2 00226 (update_map.go:5)  CALL    runtime.mapassign_faststr(SB)
+```
+其中go代码中第四行为定义以及赋值操作，第五行为更新操作，但调用的为同一个函数，在上边已经对该函数分析过。  
+然后我们发现增加元素、查找元素、更新元素调用的是同一个函数。而我上边查找元素的源码分析错了，分析的是`mapaccess1_faststr`这个函数。。。这个函数还去清楚
+在哪里用到了。但是看代码也是对key的定位。
 
 
 #### 总结
@@ -820,6 +838,7 @@ search:
     - 获取key的value时，会随机选择一个桶作为起始点遍历所有的桶，因此map的遍历是随机的。
 7. go中，通过哈希查找表实现map，用链表法解决哈希冲突。
 8. 扩容的过程是渐进的，防止一次性搬迁的key过多，引发性能问题。触发扩容的时机是添加新元素，bucket搬迁的时机则发生在赋值、删除期间，每次最多搬迁两个bucket
+9. 增改查的操作用的是同一个函数，而删除是另一个函数。增删改调用的函数返回的是value的地址，应该会在汇编层面对其进行赋值操作。
 
 #### 参考文章
 - [深度解密Go语言之map-码农桃花源](https://mp.weixin.qq.com/s/2CDpE5wfoiNXm1agMAq4wA)
