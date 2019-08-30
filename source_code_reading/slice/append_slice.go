@@ -1,7 +1,7 @@
 package main
 
 func appendSlice()  {
-	var arr []int
+	arr:=  make([]int, 0)
 	arr = append(arr, 1)
 }
 

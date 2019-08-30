@@ -297,9 +297,5 @@ func round(n, a uintptr) uintptr {
 - 将旧的slice中底层数组中的数据copy给新的底层数组
 - 组成新的slice:新的底层数组,旧的slice的长度,新的cap大小
 
-#### 遗留问题:
-1. 函数的参数cap是什么时候传入的
-2. 为什么为nil的slice可以直接进行append
-
 #### 参考文章:
 1. [码农桃花源-深度解密Go语言之Slice](https://www.cnblogs.com/qcrao-2018/p/10631989.html#%E4%B8%BA%E4%BB%80%E4%B9%88-nil-slice-%E5%8F%AF%E4%BB%A5%E7%9B%B4%E6%8E%A5-append)
