@@ -821,6 +821,35 @@ func update() {
 然后我们发现增加元素、查找元素、更新元素调用的是同一个函数。而我上边查找元素的源码分析错了，分析的是`mapaccess1_faststr`这个函数。。。这个函数还去清楚
 在哪里用到了。但是看代码也是对key的定位。
 
+#### 遍历元素
+增加代码
+```go
+func iterator() {
+	m := map[int]int{1: 1, 2: 2, 3: 3}
+	for v := range m {
+		fmt.Printf("%d\t", v)
+	}
+}
+```
+编译后得到
+```
+...
+// 0x0162 00354 (rand_map.go:7)    CALL    runtime.mapiterinit(SB)
+...
+//  0x01fc 00508 (rand_map.go:7)    CALL    runtime.mapiternext(SB)
+...
+```
+`mapiterinit`函数中有这样一段代码
+```go
+// decide where to start
+	r := uintptr(fastrand())
+	if h.B > 31-bucketCntBits {
+		r += uintptr(fastrand()) << 31
+	}
+	it.startBucket = r & bucketMask(h.B)
+```
+代表每次遍历的时候都从一个随机的bucket开始.因此即使不扩容,遍历map获得的元素的顺序也是随机的.
+
 
 #### 总结
 1. map的结构体hmap有9个属性，比较重要的几个为：元素个数、map状态标志、buckets的对数、溢出桶的近似数、哈希值（用来计算key的哈希），指向buckets数组的地址
@@ -839,7 +868,7 @@ func update() {
 7. go中，通过哈希查找表实现map，用链表法解决哈希冲突。
 8. 扩容的过程是渐进的，防止一次性搬迁的key过多，引发性能问题。触发扩容的时机是添加新元素，bucket搬迁的时机则发生在赋值、删除期间，每次最多搬迁两个bucket
 9. 增改查的操作用的是同一个函数，而删除是另一个函数。增删改调用的函数返回的是value的地址，应该会在汇编层面对其进行赋值操作。
-
+10. map的随机性指的是遍历时的随机性+扩容时重新计算哈希导致可能导致元素顺序的改变.开发者大概是为了让随机性更"明显",所以才在每次遍历的时候随机一个桶开始遍历.
 #### 参考文章
 - [深度解密Go语言之map-码农桃花源](https://mp.weixin.qq.com/s/2CDpE5wfoiNXm1agMAq4wA)
 - [如何实现随机取一个map的key](https://lukechampine.com/hackmap.html)
