@@ -22,9 +22,11 @@
 	sendx    uint   // 发送的元素的索引
 	recvx    uint   // 接收的元素的索引
 	recvq    waitq  // 等待接收元素的列表
-	sendq    waitq  // 等待法发送元素的列表
-	lock mutex // 锁
+	sendq    waitq  // 等待发送元素的列表
+	lock mutex // 锁，保护hchan中的元素及子元素
 }
+
+// 由于不可能同时存在发送和接收的缓存，因此只用一个buf来存储缓存数据即可
 
 type waitq struct {
 	first *sudog // 等待列表中的第一个
@@ -32,7 +34,6 @@ type waitq struct {
 }
 
 // sudog 和 g 之间的关系是一对多,即一个g可能有多个sudog.比如一个g可能在多个等待列表中,那么每个都会产生一个sudog
-// 其元素都被其所属的hchan中的lock保护
 type sudog struct {
 	g *g // GMP中的G,即goroutine
 
@@ -55,8 +56,9 @@ type sudog struct {
 #### 通用的send
 ```go
 func chansend(c *hchan, ep unsafe.Pointer, block bool, callerpc uintptr) bool {
-    // 如果channel为空,说明channel已经关闭或者只是声明,如果处于非阻塞状态,直接返回false
-    //                                           如果处于阻塞状态,则调用gopark,直接panic掉,因为deadlock
+    // 向一个nil的channel发送数据，如果是非阻塞的，直接返回false；如果是阻塞的，调用gopark
+    // gopark会将当前的goroutine休眠，并通过调用第一个参数来唤醒
+    // 此处第一个参数为nil，因此不会被唤醒，接收和发送的goroutine都会休眠，造成死锁
 	if c == nil {
 		if !block {
 			return false
@@ -64,30 +66,10 @@ func chansend(c *hchan, ep unsafe.Pointer, block bool, callerpc uintptr) bool {
 		gopark(nil, nil, waitReasonChanSendNilChan, traceEvGoStop, 2)
 		throw("unreachable")
 	}
-
-	if debugChan {
-		print("chansend: chan=", c, "\n")
-	}
-
-	if raceenabled {
-		racereadpc(c.raceaddr(), callerpc, funcPC(chansend))
-	}
-
-	// Fast path: 不获取锁京能检查失败的非阻塞操作
-	//
-	// 如果channel没有关闭,尼玛
-	// After observing that the channel is not closed, we observe that the channel is
-	// not ready for sending. Each of these observations is a single word-sized read
-	// (first c.closed and second c.recvq.first or c.qcount depending on kind of channel).
-	// Because a closed channel cannot transition from 'ready for sending' to
-	// 'not ready for sending', even if the channel is closed between the two observations,
-	// they imply a moment between the two when the channel was both not yet closed
-	// and not ready for sending. We behave as if we observed the channel at that moment,
-	// and report that the send cannot proceed.
-	//
-	// It is okay if the reads are reordered here: if we observe that the channel is not
-	// ready for sending and then observe that it is not closed, that implies that the
-	// channel wasn't closed during the first observation.
+	/* ...
+	   ...
+	 */
+	// Fast path: 不获取锁就能检查失败的非阻塞操作
 	if !block && c.closed == 0 && ((c.dataqsiz == 0 && c.recvq.first == nil) ||
 		(c.dataqsiz > 0 && c.qcount == c.dataqsiz)) {
 		return false
@@ -106,26 +88,23 @@ func chansend(c *hchan, ep unsafe.Pointer, block bool, callerpc uintptr) bool {
 		panic(plainError("send on closed channel"))
 	}
 	
-    // 从等待接收的队列中拿出一个sudog,并且直接进行拷贝,而不通过buffer和锁
+    // 如果当前的等待接收队列中存在数据，那么不用通过buf，直接把值发送过去。
 	if sg := c.recvq.dequeue(); sg != nil {
-		// Found a waiting receiver. We pass the value we want to send
-		// directly to the receiver, bypassing the channel buffer (if any).
 		send(c, sg, ep, func() { unlock(&c.lock) }, 3)
 		return true
 	}
     
 	// 如果等待队列为空,那么就需要等待其他goroutine来接收,查看ring buffer是否已满
-	// 如果环形队列的大小大于当前队列中的数据,说明ring buffer还有多余的空间,则将当前发送的值填充到ring buffer
+	// 如果等待发送的队列中的数据数量 小于 环形队列（ring buffer）的大小，直接将数据放到环形队列中
 	if c.qcount < c.dataqsiz {
-		// Space is available in the channel buffer. Enqueue the element to send.
 		qp := chanbuf(c, c.sendx)
 		if raceenabled {
 			raceacquire(qp)
 			racerelease(qp)
 		}
 		typedmemmove(c.elemtype, qp, ep)
-		c.sendx++
-		if c.sendx == c.dataqsiz { // 环形队列,保证FIFO
+		c.sendx++ // 标记发送索引
+		if c.sendx == c.dataqsiz {
 			c.sendx = 0
 		}
 		c.qcount++
@@ -133,14 +112,14 @@ func chansend(c *hchan, ep unsafe.Pointer, block bool, callerpc uintptr) bool {
 		return true
 	}
 
-	// 如果ring buffer已满,并且为非阻塞状态,则直接返回false? 
+	// 如果ring buffer已满,并且为非阻塞,则直接返回false 
 	if !block {
 		unlock(&c.lock)
 		return false
 	}
 
 	
-	// 阻塞住当前的channel 什么时候环形?
+	// ring buffer已满,并且为非阻塞，那么阻塞当前g，直到数据被接收
 	gp := getg()
 	mysg := acquireSudog()
 	mysg.releasetime = 0
@@ -157,14 +136,14 @@ func chansend(c *hchan, ep unsafe.Pointer, block bool, callerpc uintptr) bool {
 	gp.waiting = mysg
 	gp.param = nil
 	c.sendq.enqueue(mysg)
+	// 将当前的g从队列中移出
 	goparkunlock(&c.lock, waitReasonChanSend, traceEvGoBlockSend, 3)
-	// Ensure the value being sent is kept alive until the
-	// receiver copies it out. The sudog has a pointer to the
-	// stack object, but sudogs aren't considered as roots of the
-	// stack tracer.
+	// 因为调度器在停止当前 g 的时候会记录运行现场，当恢复阻塞的发送操作时候，会从此处继续开始执行
+	
+	// 保持数据存活
 	KeepAlive(ep)
 
-	// someone woke us up.
+	// 被唤醒
 	if mysg != gp.waiting {
 		throw("G waiting list is corrupted")
 	}
@@ -179,8 +158,124 @@ func chansend(c *hchan, ep unsafe.Pointer, block bool, callerpc uintptr) bool {
 	if mysg.releasetime > 0 {
 		blockevent(mysg.releasetime-t0, 2)
 	}
-	mysg.c = nil
-	releaseSudog(mysg)
+	mysg.c = nil 
+	releaseSudog(mysg) // 释放掉sudog
 	return true
 }
+```
+
+```go
+// send 代表了对一个空的channel的发送操作（在channl的等待接收队列不为空时，channel接收到了值，那么直接调用send进行值的拷贝）
+// ep被发送方拷贝给接受者的sg
+// 接受者将被唤醒
+// c 必须是空的，并且处于锁住状态.  调用unlockf来解锁.
+// sg 是从 c 中出列 的sudog
+// ep 必须是非空的，并且执行堆或者调用者的栈
+func send(c *hchan, sg *sudog, ep unsafe.Pointer, unlockf func(), skip int) {
+	/**
+	...
+	 */
+	if sg.elem != nil {
+		sendDirect(c.elemtype, sg, ep)
+		sg.elem = nil
+	}
+	gp := sg.g // 获取到sudog所在的groutine
+	unlockf() 
+	gp.param = unsafe.Pointer(sg)
+	if sg.releasetime != 0 {
+		sg.releasetime = cputicks()
+	}
+	// 唤醒groutine（由于其一直在等待数据被接收，因此一直处在睡眠状态，即阻塞）
+	goready(gp, skip+1) // 第二个参数 追踪ip寄存器的位置
+}
+```
+
+```go
+// 在一个无缓冲的通道或者空缓冲的同道中人发送或者接收数据，只需要向另一个groutine直接写入
+func sendDirect(t *_type, sg *sudog, src unsafe.Pointer) {
+	// 我们必须在一个函数调用中完成 sg.elem 指针的读取，否则当发生栈伸缩时，指针可能失效（被移动了）。
+	dst := sg.elem
+	// 为了确保发送的数据能够被立刻观察到，需要写屏障支持，执行写屏障，保证代码正确性
+	typeBitsBulkBarrier(t, uintptr(dst), uintptr(src), t.size)
+	memmove(dst, src, t.size)
+}
+
+```
+
+```go
+// 同sendDirect相反
+func recvDirect(t *_type, sg *sudog, dst unsafe.Pointer) {
+	src := sg.elem
+	typeBitsBulkBarrier(t, uintptr(dst), uintptr(src), t.size)
+	memmove(dst, src, t.size)
+}
+```
+
+```go
+func closechan(c *hchan) {
+	// 向nil的channel发送数据会panic
+	if c == nil {
+		panic(plainError("close of nil channel"))
+	}
+
+	lock(&c.lock)
+	// 关闭一个已经关闭的channel会panic
+	if c.closed != 0 {
+		unlock(&c.lock)
+		panic(plainError("close of closed channel"))
+	}
+
+	c.closed = 1
+
+    // 遍历所有队列，将所有的groutine都放在glist中，然后解锁，再唤醒这些groutine
+	var glist gList 
+
+	// 释放所有的接收者
+	for {
+		sg := c.recvq.dequeue()
+		if sg == nil {
+			break
+		}
+		if sg.elem != nil {
+			typedmemclr(c.elemtype, sg.elem)
+			sg.elem = nil
+		}
+		if sg.releasetime != 0 {
+			sg.releasetime = cputicks()
+		}
+		gp := sg.g
+		gp.param = nil
+		if raceenabled {
+			raceacquireg(gp, c.raceaddr())
+		}
+		glist.push(gp)
+	}
+
+	// 释放所有的发送者（会导致他们panic）
+	for {
+		sg := c.sendq.dequeue()
+		if sg == nil {
+			break
+		}
+		sg.elem = nil
+		if sg.releasetime != 0 {
+			sg.releasetime = cputicks()
+		}
+		gp := sg.g
+		gp.param = nil
+		if raceenabled {
+			raceacquireg(gp, c.raceaddr())
+		}
+		glist.push(gp)
+	}
+	unlock(&c.lock)
+
+	// 唤醒所有的goroutine
+	for !glist.empty() {
+		gp := glist.pop()
+		gp.schedlink = 0
+		goready(gp, 3)
+	}
+}
+
 ```

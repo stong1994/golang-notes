@@ -1,5 +1,5 @@
 * 代码位于src/time/time.go
-```
+```go
 func (d Duration) String() string {
 	// Largest time is 2540400h10m10.000000000s
 	var buf [32]byte
