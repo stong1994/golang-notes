@@ -55,6 +55,7 @@ type sudog struct {
 
 #### 通用的send
 ```go
+// c为要发送到的channel, ep为发送的数据,block为是否需要阻塞, 返回值为是否发送成功
 func chansend(c *hchan, ep unsafe.Pointer, block bool, callerpc uintptr) bool {
     // 向一个nil的channel发送数据，如果是非阻塞的，直接返回false；如果是阻塞的，调用gopark
     // gopark会将当前的goroutine休眠，并通过调用第一个参数来唤醒
@@ -179,19 +180,19 @@ func send(c *hchan, sg *sudog, ep unsafe.Pointer, unlockf func(), skip int) {
 		sendDirect(c.elemtype, sg, ep)
 		sg.elem = nil
 	}
-	gp := sg.g // 获取到sudog所在的groutine
+	gp := sg.g // 获取到sudog所在的goroutine
 	unlockf() 
 	gp.param = unsafe.Pointer(sg)
 	if sg.releasetime != 0 {
 		sg.releasetime = cputicks()
 	}
-	// 唤醒groutine（由于其一直在等待数据被接收，因此一直处在睡眠状态，即阻塞）
+	// 唤醒goroutine（由于其一直在等待数据被接收，因此一直处在睡眠状态，即阻塞）
 	goready(gp, skip+1) // 第二个参数 追踪ip寄存器的位置
 }
 ```
 
 ```go
-// 在一个无缓冲的通道或者空缓冲的同道中人发送或者接收数据，只需要向另一个groutine直接写入
+// 在一个无缓冲的通道或者空缓冲的同道中人发送或者接收数据，只需要向另一个goroutine直接写入
 func sendDirect(t *_type, sg *sudog, src unsafe.Pointer) {
 	// 我们必须在一个函数调用中完成 sg.elem 指针的读取，否则当发生栈伸缩时，指针可能失效（被移动了）。
 	dst := sg.elem
@@ -210,7 +211,7 @@ func recvDirect(t *_type, sg *sudog, dst unsafe.Pointer) {
 	memmove(dst, src, t.size)
 }
 ```
-
+#### 关闭channel
 ```go
 func closechan(c *hchan) {
 	// 向nil的channel发送数据会panic
@@ -227,7 +228,7 @@ func closechan(c *hchan) {
 
 	c.closed = 1
 
-    // 遍历所有队列，将所有的groutine都放在glist中，然后解锁，再唤醒这些groutine
+    // 遍历所有队列，将所有的goroutine都放在glist中，然后解锁，再唤醒这些goroutine
 	var glist gList 
 
 	// 释放所有的接收者
@@ -279,3 +280,243 @@ func closechan(c *hchan) {
 }
 
 ```
+
+```go
+// chanrecv 在c上接收到值,并将接收到的值写入ep,ep可以为空,在这种情况下接收到的值会被忽略掉.
+// 如果block为flase并且没有元素可用,返回false,false, 表示执行失败但是没有被接收
+// 如果c已经关闭了,把ep置空,返回true,false, 表示执行成功但是没有被接收
+// 其他的话,赋值给ep,并返回true,true
+// 一个非空的ep必须指向堆或者调用者的栈
+// received表示是否接收到值, 即 _, ok := <-ch 中的ok
+func chanrecv(c *hchan, ep unsafe.Pointer, block bool) (selected, received bool) {
+    // 向一个为nil的channel上发送数据,如果为非阻塞,那么直接返回false,false,如果为阻塞,那么阻塞当前goroutine,但是没有办法唤醒(第一个参数为nil),导致死锁
+	if c == nil {
+		if !block {
+			return
+		}
+		gopark(nil, nil, waitReasonChanReceiveNilChan, traceEvGoStop, 2)
+		throw("unreachable")
+	}
+
+	// Fast path: 在不用锁的情况下对非阻塞的操作检查失败
+	if !block && (c.dataqsiz == 0 && c.sendq.first == nil ||
+		c.dataqsiz > 0 && atomic.Loaduint(&c.qcount) == 0) &&
+		atomic.Load(&c.closed) == 0 {
+		return
+	}
+
+	var t0 int64
+	if blockprofilerate > 0 {
+		t0 = cputicks()
+	}
+
+	lock(&c.lock)
+    
+	// 如果channel已经关闭,并且队列中没有元素,那么直接返回ture,false
+	if c.closed != 0 && c.qcount == 0 {
+		if raceenabled {
+			raceacquire(c.raceaddr())
+		}
+		unlock(&c.lock)
+		if ep != nil {
+			typedmemclr(c.elemtype, ep)
+		}
+		return true, false
+	}
+	
+	// 如果channel中的等待发送的队列中有数据,那么获取队列中的一个数据,并直接赋值给ep
+	if sg := c.sendq.dequeue(); sg != nil {
+		recv(c, sg, ep, func() { unlock(&c.lock) }, 3)
+		return true, true
+	}
+
+	// 如果channel中的等待发送的队列中没有数据,但是等待接收的队列中有数据,那么填充buffer
+	if c.qcount > 0 {
+		// Receive directly from queue
+		qp := chanbuf(c, c.recvx)
+		if raceenabled {
+			raceacquire(qp)
+			racerelease(qp)
+		}
+		if ep != nil {
+			typedmemmove(c.elemtype, ep, qp)
+		}
+		typedmemclr(c.elemtype, qp)
+		c.recvx++
+		if c.recvx == c.dataqsiz {
+			c.recvx = 0
+		}
+		c.qcount--
+		unlock(&c.lock)
+		return true, true
+	}
+	
+    // 如果队列中没有数据,那么说明将数据发送到了一个空的channel,如果为非阻塞,那么直接返回false,false
+	if !block {
+		unlock(&c.lock)
+		return false, false
+	}
+
+	// 如果队列中没有数据,并且是阻塞,那么阻塞当前goroutine,直到有发送者接收该值
+	gp := getg()
+	mysg := acquireSudog()
+	mysg.releasetime = 0
+	if t0 != 0 {
+		mysg.releasetime = -1
+	}
+	// No stack splits between assigning elem and enqueuing mysg
+	// on gp.waiting where copystack can find it.
+	mysg.elem = ep
+	mysg.waitlink = nil
+	gp.waiting = mysg
+	mysg.g = gp
+	mysg.isSelect = false
+	mysg.c = c
+	gp.param = nil
+	c.recvq.enqueue(mysg)
+	goparkunlock(&c.lock, waitReasonChanReceive, traceEvGoBlockRecv, 3) // 阻塞当前goroutine
+
+	// 等待唤醒
+	if mysg != gp.waiting {
+		throw("G waiting list is corrupted")
+	}
+	gp.waiting = nil
+	if mysg.releasetime > 0 {
+		blockevent(mysg.releasetime-t0, 2)
+	}
+	closed := gp.param == nil
+	gp.param = nil
+	mysg.c = nil
+	releaseSudog(mysg) // 释放掉复制的sudog
+	return true, !closed // 如果channel关闭后,会接收到 _, false := <-ch
+}
+```
+
+#### 入列
+```go
+func (q *waitq) enqueue(sgp *sudog) {
+	sgp.next = nil
+	x := q.last
+	if x == nil { 
+		sgp.prev = nil
+		q.first = sgp
+		q.last = sgp
+		return
+	}
+	sgp.prev = x
+	x.next = sgp
+	q.last = sgp
+}
+```
+#### 出列
+```go
+func (q *waitq) dequeue() *sudog {
+	for {
+		sgp := q.first // 获取第一个元素,如果为空,那么说明整个队列都为空,返回nil
+		if sgp == nil {
+			return nil
+		}
+		y := sgp.next // 找到第二个元素,如果为空,那么说明在这次出列操作结束后,队列为空
+		if y == nil {
+			q.first = nil
+			q.last = nil
+		} else { // 第一个元素出列后,将第二个元素设置为首元素
+			y.prev = nil
+			q.first = y
+			sgp.next = nil // mark as removed (see dequeueSudog)
+		}
+
+		// 如果一个goroutine是因为select放进到的队列中,在goroutine之间有一个小的窗口在一些特殊情况下被唤醒,并且它能拿到channel的锁.
+		// 一旦它拿到了锁,在G的结构体中有一个标志,用来告诉我们在什么时候有其他人得到了这个竞争条件,并通知该goroutine,除非该goroutine还没有将它自己移出队列
+		if sgp.isSelect {
+			if !atomic.Cas(&sgp.g.selectDone, 0, 1) {
+				continue
+			}
+		}
+
+		return sgp
+	}
+}
+```
+
+该文件中还有一些优化select的代码
+```go
+// compiler implements
+//
+//	select {
+//	case c <- v:
+//		... foo
+//	default:
+//		... bar
+//	}
+//
+// as
+//
+//	if selectnbsend(c, v) {
+//		... foo
+//	} else {
+//		... bar
+//	}
+//
+func selectnbsend(c *hchan, elem unsafe.Pointer) (selected bool) {
+	return chansend(c, elem, false, getcallerpc())
+}
+
+// compiler implements
+//
+//	select {
+//	case v = <-c:
+//		... foo
+//	default:
+//		... bar
+//	}
+//
+// as
+//
+//	if selectnbrecv(&v, c) {
+//		... foo
+//	} else {
+//		... bar
+//	}
+//
+func selectnbrecv(elem unsafe.Pointer, c *hchan) (selected bool) {
+	selected, _ = chanrecv(c, elem, false)
+	return
+}
+
+// compiler implements
+//
+//	select {
+//	case v, ok = <-c:
+//		... foo
+//	default:
+//		... bar
+//	}
+//
+// as
+//
+//	if c != nil && selectnbrecv2(&v, &ok, c) {
+//		... foo
+//	} else {
+//		... bar
+//	}
+//
+func selectnbrecv2(elem unsafe.Pointer, received *bool, c *hchan) (selected bool) {
+	// TODO(khr): just return 2 values from this function, now that it is in Go.
+	selected, *received = chanrecv(c, elem, false)
+	return
+}
+```
+由上可知,select和channel息息相关,并且编译器会将select优化为if-else  
+显然上述情况并没有涵盖所有select的清空,所以select会单独来写分析.
+
+#### 总结
+1. channel中的缓存为ring buffer
+2. 缓冲中存放的是sudog // todo buf和两个队列的关系?
+3. channel中有两个字段用来存放等待接收的sudog和等待发送的sudog
+4. 两个等待队列为FIFO
+
+#### 资料
+1. [夜读分享者的PPT](https://docs.google.com/presentation/d/18_9LcMc8u93aITZ6DqeUfRvOcHQYj2gwxhskf0XPX2U/edit#slide=id.gc6f919934_0_0)
+2. [夜读分享者的视频](https://www.bilibili.com/video/av64926593?t=4703)
+3. [understanding channel-英文ppt](https://speakerdeck.com/kavya719/understanding-channels)
