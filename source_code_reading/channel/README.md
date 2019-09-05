@@ -5,10 +5,20 @@
 **代码位置**: runtime/chan.go  
  一共约700行
  
- 四种操作:创建,发送,接收和关闭
- 
- 关闭: sendq和receq为nil,buf可能不为空,如果为空则清零reader的读取位置,如果不为空则继续读buf
- 
+ #### go代码函数 对应 编译后的函数
+ ```
+1. make(chan interface{}, size) ⇒ runtime.makechan(interface{}, size)
+
+   make(chan interface{})       ⇒ runtime.makechan(interface{}, 0)
+
+2. ch <- v                      ⇒ runtime.chansend1(ch, &v)
+
+3. v <- ch                      ⇒ runtime.chanrecv1(ch, &v)
+
+   v, ok <- ch                  ⇒ ok := runtime.chanrecv2(ch, &v)
+
+4. close(ch)                    ⇒ runtime.closechan(ch)
+```
  
  #### 结构体
  ```go
@@ -291,7 +301,7 @@ func closechan(c *hchan) {
 func chanrecv(c *hchan, ep unsafe.Pointer, block bool) (selected, received bool) {
     // 向一个为nil的channel上发送数据,如果为非阻塞,那么直接返回false,false,如果为阻塞,那么阻塞当前goroutine,但是没有办法唤醒(第一个参数为nil),导致死锁
 	if c == nil {
-		if !block {
+		if !block { // 在select中接收一个已经关闭了的channel，总是获得零值。（select中block为false）
 			return
 		}
 		gopark(nil, nil, waitReasonChanReceiveNilChan, traceEvGoStop, 2)
@@ -512,11 +522,19 @@ func selectnbrecv2(elem unsafe.Pointer, received *bool, c *hchan) (selected bool
 
 #### 总结
 1. channel中的缓存为ring buffer
-2. 缓冲中存放的是sudog // todo buf和两个队列的关系?
-3. channel中有两个字段用来存放等待接收的sudog和等待发送的sudog
-4. 两个等待队列为FIFO
+2. channel中有两个字段用来存放等待接收的sudog和等待发送的sudog
+3. 缓冲中存放的是数据，而两个等待队列中存放的是sudog
+4. 访问缓存中的数据为FIFO
+5. 向一个关闭后的channel中接收数据，如果是在select中，会得到零值（zero,false := <- ch）,但是在非select中则会死锁。这是由参数block决定的。
+6. 关闭channel
+    - 上锁
+    - 遍历两个等待队列，释放sudog中的元素，然后将sudog所在的g放到一个数组中
+    - 解锁
+    - 唤醒数组中的g
 
 #### 资料
 1. [夜读分享者的PPT](https://docs.google.com/presentation/d/18_9LcMc8u93aITZ6DqeUfRvOcHQYj2gwxhskf0XPX2U/edit#slide=id.gc6f919934_0_0)
 2. [夜读分享者的视频](https://www.bilibili.com/video/av64926593?t=4703)
 3. [understanding channel-英文ppt](https://speakerdeck.com/kavya719/understanding-channels)
+4. [深度解密Go语言之channel——饶大](https://mp.weixin.qq.com/s?__biz=MjM5MDUwNTQwMQ==&mid=2257483870&idx=1&sn=1c61a1f530b3e52d801a7916065f3eec&chksm=a5391888924e919e39ddb8f017b572fd6f199184d6ad85c4ae4dacf2749312b70717d7beee44&mpshare=1&scene=1&srcid=&key=034516426b2066d0f70d525bf66160c508cad2ca843ffddfa4ee6bd2edc545645b98d4bb5ce66bab8cfa81546462f00c8fe47c5e797a7ccbedf92eeb800ec864b921273b277153f1b88730e5d884ce91&ascene=1&uin=MjEwMjA3MTA2NQ%3D%3D&devicetype=Windows+10&version=62060834&lang=zh_CN&pass_ticket=efPNLRctgYmpKMszLe6OEG5z5f8en%2BzyyWAgphiEkVcPy2arsWBGjQPgMH5xDDSU)
+5. [大彬的源码读后感](http://lessisbetter.site/2019/03/03/golang-channel-design-and-source/)
