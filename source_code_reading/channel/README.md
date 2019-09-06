@@ -301,7 +301,7 @@ func closechan(c *hchan) {
 func chanrecv(c *hchan, ep unsafe.Pointer, block bool) (selected, received bool) {
     // 向一个为nil的channel上发送数据,如果为非阻塞,那么直接返回false,false,如果为阻塞,那么阻塞当前goroutine,但是没有办法唤醒(第一个参数为nil),导致死锁
 	if c == nil {
-		if !block { // 在select中接收一个已经关闭了的channel，总是获得零值。（select中block为false）
+		if !block { 
 			return
 		}
 		gopark(nil, nil, waitReasonChanReceiveNilChan, traceEvGoStop, 2)
