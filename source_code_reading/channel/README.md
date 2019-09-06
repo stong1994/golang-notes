@@ -525,12 +525,15 @@ func selectnbrecv2(elem unsafe.Pointer, received *bool, c *hchan) (selected bool
 2. channel中有两个字段用来存放等待接收的sudog和等待发送的sudog
 3. 缓冲中存放的是数据，而两个等待队列中存放的是sudog
 4. 访问缓存中的数据为FIFO
-5. 向一个关闭后的channel中接收数据，如果是在select中，会得到零值（zero,false := <- ch）,但是在非select中则会死锁。这是由参数block决定的。
-6. 关闭channel
+5. 向一个为nil的channel中接收数据，如果是在select中，会得到零值（zero,false := <- ch）,但是在非select中则会死锁。这是由参数block决定的。
+6. channel为nil的情况：当一个channel只是被声明。关闭状态的channel不是nil，用closed字段标识；用make构造的channel也不是nil
+7. 关闭channel
     - 上锁
     - 遍历两个等待队列，释放sudog中的元素，然后将sudog所在的g放到一个数组中
     - 解锁
     - 唤醒数组中的g
+8. 关闭channel，会导致等待发送的队列中的goroutine panic；关闭channel，并没有清空缓存中的数据，
+9. 关闭channel，在等待接收的队列中，如果channel还有缓冲，返回缓存值和true，如果没有缓冲，返回零值和false。因此一个向关闭的channel中获取值，不一定为零值和false
 
 #### 资料
 1. [夜读分享者的PPT](https://docs.google.com/presentation/d/18_9LcMc8u93aITZ6DqeUfRvOcHQYj2gwxhskf0XPX2U/edit#slide=id.gc6f919934_0_0)
