@@ -1,4 +1,4 @@
-package main
+package num_1_10
 
 import (
 	"fmt"
