@@ -531,3 +531,6 @@ sclose:
     }
     ```
 3. select也要进行循环。如果不存在符合条件的case并且没有default，则阻塞当前g。有一种情况是被唤醒后也没有命中case（case所在的channel被关闭且gp.param==nil）,这种情况下需要再次进入循环
+
+### 资料
+1. [图解Go select语句原理](https://mp.weixin.qq.com/s?__biz=MzUzMjk0ODI0OA==&mid=2247483732&idx=1&sn=7eca3285276f9e7614ac20ae08805b5a&chksm=faaa3523cdddbc35bb992c3bc3b1608f7cfebf3ce43401f0df4e87effdf58193cd2c6653b1d5&mpshare=1&scene=24&srcid=0904jYtswBdcxmrNeI8GKdKH&sharer_sharetime=1567532080258&sharer_shareid=f5e47e146b50b09fca018057d1452bcd&key=e569ae84dd481d07f85a13fefd00aa8a52f7c57c85f327e2a5f88ace4fa309f865ad0a53ea996bc3270566204fca7f50d9987f033192a92edd39d1d311543542fd6819c43522cd032d5c981d9ce2dec6&ascene=14&uin=MjEwMjA3MTA2NQ%3D%3D&devicetype=Windows+10&version=62060834&lang=zh_CN&pass_ticket=R7gtyq4ShZYwJgyj%2FYXaxsLmh40yuZ9uIZiA3hVA%2BZv0MfrGmFjE%2F1YakT1725DU)
