@@ -1,11 +1,11 @@
 package main
 
-type Jedi interface {
-	HasForce() bool
+type EmptyStruct struct {
+
 }
 
-type Knight struct {}
-
-var _ Jedi = (*Knight)(nil)       // 利用编译器检查接口实现
-
-func main() {}
+func main() {
+	var es interface{} = EmptyStruct{}
+	var es2 interface{} = &EmptyStruct{}
+	_, _ = es, es2
+}
