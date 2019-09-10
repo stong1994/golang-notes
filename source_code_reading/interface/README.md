@@ -167,11 +167,34 @@ _, _ = es, es2
 0x0046 00070 (impl_empty_interface.go:7)        RET
 ```
 发现只是对类型进行了赋值
-#### 
+#### 利用编译器检查接口实现
+```go
+type myWriter struct {
 
-1. 修改接口,会不会改变原值(slice)
+}
+
+/*func (w myWriter) Write(p []byte) (n int, err error) {
+    return
+}*/
+
+func main() {
+    // 检查 *myWriter 类型是否实现了 io.Writer 接口
+    var _ io.Writer = (*myWriter)(nil)
+
+    // 检查 myWriter 类型是否实现了 io.Writer 接口
+    var _ io.Writer = myWriter{}
+}
+```
+
 #### 知识点
 1. 接口最少有两部分：接口类型和数据地址。因此只有接口类型和数据都为空时，接口才会等于nil
+2. 如果一个接口的实体类型为值类型,那么会赋值数据并将地址传给`iface.data`,因此改变转为接口后的值不会改变原值,而引用类型和指针类型相反.
+
 ### 相关资料
 1. [golang中interface底层分析](https://www.jianshu.com/p/ce91ca87fef1?utm_campaign=haruki&utm_content=note&utm_medium=reader_share&utm_source=weixin)
 2. [深度解密Go语言之关于 interface 的10个问题--饶大](https://www.cnblogs.com/qcrao-2018/p/10766091.html)
+
+### TODO
+1. gdb调试
+2. 接口转换
+3. 阅读汇编源码
