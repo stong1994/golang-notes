@@ -10,5 +10,6 @@ require (
 	github.com/onsi/ginkgo v1.8.0 // indirect
 	github.com/onsi/gomega v1.5.0 // indirect
 	github.com/shopspring/decimal v0.0.0-20180709203117-cd690d0c9e24
-	golang.org/x/sync v0.0.0-20190423024810-112230192c58
+	go.uber.org/zap v1.13.0
+	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 )
