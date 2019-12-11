@@ -78,3 +78,57 @@ func BenchmarkBufferWithGrow(b *testing.B) {
 		BufferWithGrow(arr)
 	}
 }
+
+var s string
+var x = []byte{1023:'x'}
+var y = []byte{1023:'y'}
+
+func fc()  {
+	s = (" " + string(x) + string(y))[1:]
+}
+
+func fd()  {
+	s = string(x) + string(y)
+}
+
+func TestStringGo101(t *testing.T) {
+	fmt.Println(testing.AllocsPerRun(1, fc)) // 1
+	fmt.Println(testing.AllocsPerRun(1, fd)) // 3
+}
+
+/*
+BenchmarkFC-8            5000000               339 ns/op            2304 B/op          1 allocs/op
+BenchmarkFD-8            2000000               623 ns/op            4096 B/op          3 allocs/op
+*/
+func BenchmarkFC(b *testing.B)  {
+	for i := 0; i < b.N; i++ {
+		fc()
+	}
+}
+
+func BenchmarkFD(b *testing.B)  {
+	for i := 0; i < b.N; i++ {
+		fd()
+	}
+}
+
+var x1 = string(x)
+var y1 = string(y)
+
+func fc1()  {
+	s = (" " + x1 + y1)[1:]
+}
+
+func fd1()  {
+	s = x1 + y1
+}
+
+func TestStringGo101_2(t *testing.T) {
+	fmt.Println(testing.AllocsPerRun(1, fc1)) // 1
+	fmt.Println(testing.AllocsPerRun(1, fd1)) // 1
+}
+
+/*
+BenchmarkFC-8            5000000               337 ns/op            2304 B/op          1 allocs/op
+BenchmarkFD-8            5000000               329 ns/op            2048 B/op          1 allocs/op
+*/
