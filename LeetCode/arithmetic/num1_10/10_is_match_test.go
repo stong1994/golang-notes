@@ -122,7 +122,7 @@ func TestIsMatch(t *testing.T) {
 /*
 给你一个字符串 s 和一个字符规律 p，请你来实现一个支持 '.' 和 '*' 的正则表达式匹配。
 */
-// todo https://leetcode-cn.com/problems/regular-expression-matching/solution/yi-bu-dao-wei-zhi-jie-an-zheng-ze-biao-da-shi-de-s/
+// https://leetcode-cn.com/problems/regular-expression-matching/solution/yi-bu-dao-wei-zhi-jie-an-zheng-ze-biao-da-shi-de-s/
 func debug(v ...interface{}) {
 	log.Println(v...)
 }
@@ -153,7 +153,7 @@ type Node struct {
 	Parent   *Node            // 父节点
 	Children map[byte][]*Node // 子孙节点
 	End      bool             // 本节点是否为最终节点
-	Size     int              // 本节点的最小长度，如果后面携带 *∗，则自由长度为 0; 否则为 1
+	Size     int              // 本节点的最小长度，如果后面携带 *，则自由长度为 0; 否则为 1
 }
 
 func (n *Node) String() string {
@@ -242,7 +242,7 @@ func check(now *Node, str string, idx int) bool {
 		return now.End
 	}
 	list := now.Children['.'] // 如果子孙节点中包含. 那么在for循环的idx+1,相当于匹配到了任何数
-	for _, v := range now.Children[str[idx]] {
+	for _, v := range now.Children[str[idx]] { // 获取
 		list = append(list, v)
 	}
 	for _, v := range list {
