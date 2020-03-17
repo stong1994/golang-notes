@@ -136,16 +136,16 @@ func FindWithAggregate(collection string, matchStage, projectStage bson.D, limit
 	ctx := context.Background()
 	pip := mongo.Pipeline{matchStage, projectStage}
 	opts := options.Aggregate().SetMaxTime(MaxAggregateTime)
-	if limit > 0 {
-		pip = append(pip, bson.D{{"$limit", limit}})
-	}
-	if skip > 0 {
-		pip = append(pip, bson.D{{"$skip", skip}})
-	}
 	if sort != nil {
 		pip = append(pip, bson.D{
 			{"$sort", convertSort(sort)},
 		})
+	}
+	if skip > 0 {
+		pip = append(pip, bson.D{{"$skip", skip}})
+	}
+	if limit > 0 {
+		pip = append(pip, bson.D{{"$limit", limit}})
 	}
 	cursor, err := c.Aggregate(ctx, pip, opts)
 	if err != nil {
@@ -163,16 +163,16 @@ func AggregateGroup(collection string, matchStage, groupStage, projectStage bson
 	ctx := context.Background()
 	pip := mongo.Pipeline{matchStage, groupStage, projectStage}
 	opts := options.Aggregate().SetMaxTime(MaxAggregateTime)
-	if limit > 0 {
-		pip = append(pip, bson.D{{"$limit", limit}})
-	}
-	if skip > 0 {
-		pip = append(pip, bson.D{{"$skip", skip}})
-	}
 	if sort.IsValid() {
 		pip = append(pip, bson.D{
 			{"$sort", convertSort(sort)},
 		})
+	}
+	if skip > 0 {
+		pip = append(pip, bson.D{{"$skip", skip}})
+	}
+	if limit > 0 {
+		pip = append(pip, bson.D{{"$limit", limit}})
 	}
 	cursor, err := c.Aggregate(ctx, pip, opts)
 	if err != nil {
