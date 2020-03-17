@@ -5,12 +5,12 @@ import "fmt"
 /*
 工厂模式
 参考文章：https://www.sohamkamani.com/blog/golang/2018-06-20-golang-factory-patterns/
- */
+*/
 
 // 简单工厂模式 Simple Factory
 type Person struct {
 	Name string
-	Age int
+	Age  int
 }
 
 func (p Person) Greet() {
@@ -21,7 +21,7 @@ func (p Person) Greet() {
 func NewPerson(name string, age int) *Person {
 	return &Person{
 		Name: name,
-		Age: age,
+		Age:  age,
 	}
 }
 
@@ -32,7 +32,7 @@ type IPerson interface {
 
 type person struct {
 	name string
-	age int
+	age  int
 }
 
 func (p person) Greet() {
@@ -43,29 +43,29 @@ func (p person) Greet() {
 func NewIPerson(name string, age int) IPerson {
 	return person{
 		name: name,
-		age: age,
+		age:  age,
 	}
 }
 
 // 工厂方法 Factory methods
 type Animall struct {
 	species string
-	age int
+	age     int
 }
 
 type AnimalHouse struct {
-	name string
+	name         string
 	sizeInMeters int
 }
 
 type AnimalFactory struct {
-	species string
+	species   string
 	houseName string
 }
 
 func NewAnimalFactory(species, houseName string) *AnimalFactory {
 	return &AnimalFactory{
-		species: species,
+		species:   species,
 		houseName: houseName,
 	}
 }
@@ -73,18 +73,18 @@ func NewAnimalFactory(species, houseName string) *AnimalFactory {
 func (af AnimalFactory) NewAnimal(age int) *Animall {
 	return &Animall{
 		species: af.species,
-		age: age,
+		age:     age,
 	}
 }
 
 func (af AnimalFactory) NewHouse(sizeInMeters int) *AnimalHouse {
 	return &AnimalHouse{
-		name: af.houseName,
+		name:         af.houseName,
 		sizeInMeters: sizeInMeters,
 	}
 }
 
-func DoIt()  {
+func DoIt() {
 	dogFactory := NewAnimalFactory("dog", "kennel")
 	dog := dogFactory.NewAnimal(1)
 	kennel := dogFactory.NewHouse(3)
@@ -97,20 +97,20 @@ func DoIt()  {
 
 // 工厂函数 Factory functions
 type Pen struct {
-	name string
+	name   string
 	length int
 }
 
 func NewPenFactory(name string) func(length int) Pen {
 	return func(length int) Pen {
 		return Pen{
-			name: name,
+			name:   name,
 			length: length,
 		}
 	}
 }
 
-func DoIt_v2()  {
+func DoIt_v2() {
 	pencilFactory := NewPenFactory("pencil")
 	bigPencil := pencilFactory(10)
 
@@ -125,19 +125,19 @@ type Operator interface {
 	Operate(int, int) int
 }
 
-type AddOperate struct {}
+type AddOperate struct{}
 
 func (AddOperate) Operate(a, b int) int {
 	return a + b
 }
 
-type MulOperate struct {}
+type MulOperate struct{}
 
 func (MulOperate) Operate(a, b int) int {
 	return a * b
 }
 
-type OperatorFactory struct {}
+type OperatorFactory struct{}
 
 func CreateOperator(operatorName string) Operator {
 	switch operatorName {
@@ -150,7 +150,7 @@ func CreateOperator(operatorName string) Operator {
 	}
 }
 
-func DoIt_v3()  {
+func DoIt_v3() {
 	addOperator := CreateOperator("+")
 	sum := addOperator.Operate(1, 2)
 
