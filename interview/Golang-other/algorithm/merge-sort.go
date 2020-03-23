@@ -37,7 +37,7 @@ func merge(left, right []int) []int {
 		result = append(result, left[m])
 		m++
 	}
-	result = append(result, right[n:]...) // 这里竟然没有报数组越界的异常？
+	result = append(result, right[n:]...)
 	result = append(result, left[m:]...)
 	return result
 }
