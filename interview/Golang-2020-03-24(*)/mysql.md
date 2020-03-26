@@ -70,6 +70,7 @@ extra列返回的描述的意义：
 3. 数据库事务的四大特征
     > ACID: 原子性、一致性、隔离性、持久性
 4. char和varchar的区别
-    > 
+    > char定长，不管存储字符的长度如何，存储的数据长度都是固定的；varchar不定长，会多占一个或两个来存储长度信息，根据实际情况保存，能够节约磁盘空间  
+    char的范围是0-255， varchar最长64k
 5. mysql为什么使用B+树
     > https://blog.csdn.net/xlgen157387/article/details/79450295
