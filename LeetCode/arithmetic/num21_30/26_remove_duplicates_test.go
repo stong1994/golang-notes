@@ -1,12 +1,8 @@
 package num21_30
 
-<<<<<<< HEAD
 import (
 	"testing"
 )
-=======
-import "testing"
->>>>>>> e22fcc63be6ddfc76874d171d48b4b29f8de4d88
 
 /*
 给定一个排序数组，你需要在原地删除重复出现的元素，使得每个元素只出现一次，返回移除后数组的新长度。
@@ -45,11 +41,7 @@ func TestRemoveDuplicates(t *testing.T) {
 	}
 }
 
-<<<<<<< HEAD
 func foolish(nums []int) int {
-=======
-func removeDuplicates(nums []int) int {
->>>>>>> e22fcc63be6ddfc76874d171d48b4b29f8de4d88
 	if len(nums) == 0 {
 		return 0
 	}
@@ -64,7 +56,6 @@ func removeDuplicates(nums []int) int {
 	}
 	return len(nums)
 }
-<<<<<<< HEAD
 
 func mine(nums []int) int {
 	if len(nums) == 0 {
@@ -121,5 +112,3 @@ func removeDuplicates(nums []int) int {
 //	}
 //	return i
 //}
-=======
->>>>>>> e22fcc63be6ddfc76874d171d48b4b29f8de4d88
