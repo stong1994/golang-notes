@@ -15,6 +15,12 @@ func TestIsMatch(t *testing.T) {
 		want bool
 	}{
 		{
+			"match0",
+			"abc",
+			"a.c",
+			true,
+		},
+		{
 			"match1",
 			"aa",
 			"a",
@@ -46,6 +52,12 @@ func TestIsMatch(t *testing.T) {
 			"match6",
 			"",
 			"c*",
+			true,
+		},
+		{
+			"math6.5",
+			"baabbbaccbccacacc",
+			"c*..b*a*a.*a..*c",
 			true,
 		},
 		{
@@ -107,18 +119,10 @@ func TestIsMatch(t *testing.T) {
 	}
 }
 
-func TestForI(t *testing.T) {
-	arr := []int{1, 2, 3, 4}
-	for i := 0; i < len(arr); i++ {
-		i++
-		fmt.Println(arr[i])
-	}
-}
-
 /*
 给你一个字符串 s 和一个字符规律 p，请你来实现一个支持 '.' 和 '*' 的正则表达式匹配。
 */
-// todo https://leetcode-cn.com/problems/regular-expression-matching/solution/yi-bu-dao-wei-zhi-jie-an-zheng-ze-biao-da-shi-de-s/
+// https://leetcode-cn.com/problems/regular-expression-matching/solution/yi-bu-dao-wei-zhi-jie-an-zheng-ze-biao-da-shi-de-s/
 func debug(v ...interface{}) {
 	log.Println(v...)
 }
@@ -139,17 +143,17 @@ func toString(i interface{}) string {
 func isMatch(s string, p string) bool {
 	begin := new(Node)
 	begin.C = '>'
-	begin.Size = generatePattern(begin, p, 0)
+	begin.Size = generatePattern(begin, p, 0) // 设置有限状态机的长度
 	debug(begin.String())
 	return check(begin, s, 0)
 }
 
 type Node struct {
-	C        byte
-	Parent   *Node
-	Children map[byte][]*Node
-	End      bool
-	Size     int
+	C        byte             // 当前字符
+	Parent   *Node            // 父节点
+	Children map[byte][]*Node // 子孙节点
+	End      bool             // 本节点是否为最终节点
+	Size     int              // 本节点的最小长度，如果后面携带 *，则自由长度为 0; 否则为 1
 }
 
 func (n *Node) String() string {
@@ -175,6 +179,7 @@ func (n *Node) StringLevel(level int, finishNodes map[*Node]bool) string {
 	return strings.Join(r, "\n")
 }
 
+// 判断n的子节点中是否有c以及child，如果没有，添加
 func (n *Node) Append(c byte, child *Node) {
 	m := n.Children
 	if m == nil {
@@ -187,7 +192,7 @@ func (n *Node) Append(c byte, child *Node) {
 	}
 	for _, v := range list {
 		if v == child {
-			m[c] = list
+			// m[c] = list
 			return
 		}
 	}
@@ -195,6 +200,7 @@ func (n *Node) Append(c byte, child *Node) {
 	m[c] = list
 }
 
+// now为str[idx]的父节点，str为正则字符串，idx为当前字符串索引，返回状态机中当前节点后的的长度
 func generatePattern(now *Node, str string, idx int) int {
 	if len(str) <= idx {
 		now.End = true
@@ -202,10 +208,10 @@ func generatePattern(now *Node, str string, idx int) int {
 	}
 	vnow := now
 	switch str[idx] {
-	case '*':
+	case '*': // *代表零个或多个now.C，指定size为0并在now节点的子孙节点中增加本身
 		now.Size = 0
 		now.Append(now.C, now)
-	default:
+	default: // 为now的子孙节点中添加一个普通节点
 		node := new(Node)
 		node.C = str[idx]
 		now.Append(str[idx], node)
@@ -213,29 +219,30 @@ func generatePattern(now *Node, str string, idx int) int {
 		node.Size = 1
 		vnow = node
 	}
-	ret := generatePattern(vnow, str, idx+1)
+	ret := generatePattern(vnow, str, idx+1) // 递归剩余的字符
 	if ret == 0 {
 		now.End = true
 	}
 	addParent := now
-	for addParent.Parent != nil {
+	for addParent.Parent != nil { // 如果父节点为*，那么增加当前节点为爷节点的子孙节点
 		if addParent.Size == 0 {
-			debug(toString(vnow), " -> ", toString(addParent.Parent))
+			debug((vnow), " -> ", toString(addParent.Parent))
 			addParent.Parent.Append(vnow.C, vnow)
 			addParent = addParent.Parent
-		} else {
+		}else {
 			break
 		}
 	}
 	return now.Size + ret
 }
 
+// 检测str是否符合有限状态机
 func check(now *Node, str string, idx int) bool {
 	if len(str) <= idx {
 		return now.End
 	}
-	list := now.Children['.']
-	for _, v := range now.Children[str[idx]] {
+	list := now.Children['.'] // 如果子孙节点中包含. 那么在for循环的idx+1,相当于匹配到了任何数
+	for _, v := range now.Children[str[idx]] { // 获取
 		list = append(list, v)
 	}
 	for _, v := range list {
