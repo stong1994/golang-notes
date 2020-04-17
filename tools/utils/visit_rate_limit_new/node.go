@@ -1,4 +1,4 @@
-package visit_limit
+package limiter
 
 import "time"
 

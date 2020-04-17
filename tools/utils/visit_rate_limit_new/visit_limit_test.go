@@ -1,4 +1,4 @@
-package visit_limit
+package limiter
 
 import (
 	"fmt"
@@ -212,7 +212,7 @@ func TestVisit11Dur1s(t *testing.T) {
 }
 //
 //
-//// 测试同一个ip在10s后访问的节点分布情况
+// 测试同一个ip在10s后访问的节点分布情况
 //func TestVisitAfter20s(t *testing.T) {
 //	ip := "22222"
 //	Update(ip)
@@ -284,5 +284,45 @@ func printNodes(nodes *visitLimit, ip string)  {
 	for i := 0; i < nodeCount; i++ {
 		fmt.Println(node.num)
 		node = node.next
+	}
+}
+
+func TestMockLimiter(t *testing.T) {
+	const (
+		id = "dianmi.com"
+		limit = 10
+		burst = 10
+	)
+
+	limiter := NewVisitLimit(limit, 1000, nodeCount)
+	allow := func(id string) bool {
+		limiter.UpdateIp(id)
+		return limiter.CheckIP(id)
+	}
+
+	for i := 0; i < limit; i++ {
+		if !allow(id) {
+			t.Fatal("should allow，index is", i)
+		}
+	}
+
+	for i := 0; i < limit; i++ {
+		if allow(id) {
+			t.Fatal("should not allow，index is", i)
+		}
+	}
+
+	time.Sleep(time.Second)
+	for i := 0; i < limit; i++ {
+		if !allow(id) {
+
+			t.Fatal("should allow，index is", i)
+		}
+	}
+
+	for i := 0; i < limit; i++ {
+		if allow(id) {
+			t.Fatal("should not allow，index is", i)
+		}
 	}
 }

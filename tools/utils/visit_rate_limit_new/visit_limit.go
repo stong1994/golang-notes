@@ -1,4 +1,4 @@
-package visit_limit
+package limiter
 
 import (
 	"sync"
@@ -104,7 +104,6 @@ func (v *visitLimit) VisitSum(ip string) int {
 }
 
 // 更新ip访问列表
-// 查看当前时间与ip的第一个节点的访问时间间隔多远
 func (v *visitLimit) UpdateIp(ip string) {
 	v.ipLimit.Lock()
 	defer v.ipLimit.Unlock()
