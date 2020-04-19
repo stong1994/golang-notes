@@ -12,6 +12,7 @@ require (
 	github.com/onsi/gomega v1.5.0 // indirect
 	github.com/shopspring/decimal v0.0.0-20180709203117-cd690d0c9e24
 	go.uber.org/zap v1.13.0
+	golang.org/x/time v0.0.0-20190921001708-c4c64cad1fd0
 	gopkg.in/go-playground/assert.v1 v1.2.1
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 )
