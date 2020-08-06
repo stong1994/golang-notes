@@ -12,9 +12,9 @@ func timeoutFunc(data chan int, done chan struct{}, f func(data int)) {
 	select {
 	case d := <-data:
 		f(d)
-	case <-time.After(time.Second):
-		fmt.Println("timeout")
-	}
+	case <-time.After(time.Second): // 补充：直接使用time.After存在内存泄露的问题，如果在1s内函数返回，Timer不会立刻被回收
+		fmt.Println("timeout") // 如果访问很频繁，就会造成大量的内存泄露
+	} // 使用time.NewTimer()
 	close(done)
 }
 
@@ -34,4 +34,16 @@ func main() {
 func waitFunc(dataCh chan int) {
 	time.Sleep(time.Second * 2)
 	dataCh <- 1
+}
+
+// 正确用法
+func timeoutFunc2(data chan int, done chan struct{}, f func(data int)) {
+	idleDelay := time.NewTimer(time.Second)
+	select {
+	case d := <-data:
+		f(d)
+	case <-idleDelay.C:
+		fmt.Println("timeout")
+	}
+	close(done)
 }

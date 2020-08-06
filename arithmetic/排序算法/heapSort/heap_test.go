@@ -34,14 +34,14 @@ func (d *data) Pop() Val {
 	return val
 }
 
-func init()  {
+func init() {
 	rand.NewSource(time.Now().UnixNano())
 }
 
 /*
 Pop(), 获取最小元素，并删除，由于是最小堆，那么获取的是首元素
 Remove(),获取最后一个元素，由于是最大堆，那么获取的是尾元素
- */
+*/
 func TestInit(t *testing.T) {
 	var d data
 	for i := 0; i < 20; i++ {
