@@ -238,6 +238,10 @@ Content-Type: text/html; charset=utf-8
 ```
 上面头信息中，`Access-Control-Allow-Origin`字段是每次回应都**必定包含**的。
 
+
+# Websocket中的“跨域”
+在`https://github.com/gorilla/websocket`这个库中，会默认比较Header中Origin与Host，如果经判断为不等，则会返回错误状态码。
+
 ### 参考资料  
 - [PATCH的定义](https://tools.ietf.org/html/rfc5789)
 - [深入理解RESTful API](https://www.jianshu.com/p/84568e364ee8)

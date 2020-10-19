@@ -45,8 +45,9 @@ func TestDouble11_1(t *testing.T) {
 // 动态规划需要定义数组，所以需要控制最大长度
 // 规定购物花费的金额不能超过满减的3倍，即600
 func TestDouble11_2(t *testing.T) {
-	//set := make(map[int][]int) // 价格-商品列表
-	//const totalNum = 5
-	//arr := [totalNum][]int{}
+	m := make(map[int][]int) // 价格-商品列表
+	const totalNum = 5
+	const maxLen = thresholdPrice * 3
+	arr := [totalNum][]int{}
 
 }
