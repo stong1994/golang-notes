@@ -19,7 +19,7 @@ var mongodb *mongo.Database
 func Init() {
 	opts := &options.ClientOptions{}
 	//connString := fmt.Sprintf("mongodb://%s:%s@%s:%s/%s?authSource=admin", user, password, host, port, dbname)
-	connString := "mongodb://127.0.0.1:27017"
+	connString := "mongodb://admin:123456@127.0.0.1:27017/admin?authSource=admin"
 	opts.ApplyURI(connString)
 	opts.SetMaxPoolSize(30) //设置连接池大小
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -214,6 +214,7 @@ func CountWithAggregate(collection string, matchStage bson.D) (int64, error) {
 	}
 	return m.Count, err
 }
+
 // ==========================================  Aggregation end ==========================================
 // delete collection
 func DropCollection(collection string) error {
