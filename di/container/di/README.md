@@ -1,0 +1,1 @@
+代码源于：https://github.com/PacktPublishing/Event-Driven-Architecture-in-Golang/tree/main/Chapter12/internal/di
